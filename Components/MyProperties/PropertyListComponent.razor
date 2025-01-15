@@ -1,0 +1,58 @@
+﻿@using Contract
+
+@using MudBlazor
+@inherits PropertyListViewModel
+
+<MudTable Class="ml-4 mt-4 mr-4" Elevation="4" Items="@Properties" Dense Hover="true" Bordered="false" Filter="new Func<PropertyDto, bool>(FilterFunc)" Loading="@Loading">
+    <ToolBarContent>
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" Variant="Variant.Outlined" style="font-weight: bold;" OnClick="@(() => CreateOrUpdateProperty(new PropertyDto()))">
+            Create New Property
+        </MudButton>
+        <MudSpacer />
+        <MudTextField T="string" Label="Search" Variant="Variant.Outlined" @bind-Value="SearchPropertyName" Clearable="true" Immediate="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" />
+    </ToolBarContent>
+    <ColGroup>
+        <col />
+        <col />
+        <col />
+        <col style="width:2px;" />
+        <col style="width:2px;" />
+    </ColGroup>
+    <HeaderContent>
+        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Title</MudTh>
+        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Description</MudTh>
+         <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Address</MudTh>
+        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Price</MudTh>
+        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Property Type</MudTh>
+        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Status</MudTh>
+        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Area</MudTh>
+        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;"></MudTh>
+    </HeaderContent>
+<RowTemplate Context="property">
+    <MudTd>@property.Title</MudTd>
+    <MudTd>@property.Description</MudTd>
+    <MudTd>@property.Address</MudTd>
+    <MudTd>@property.Price</MudTd>
+    <MudTd>@property.PropertyType</MudTd>
+    <MudTd>@property.Status</MudTd>
+    <MudTd>@property.Area</MudTd>
+    <MudTd>
+        <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => CreateOrUpdateProperty(property)" />
+    </MudTd>
+    <MudTd>
+        <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteProperty(property)" />
+    </MudTd>
+</RowTemplate>
+
+    <NoRecordsContent>
+        <MudText>No properties found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="Items per page" InfoFormat="@InfoFormat" />
+    </PagerContent>
+</MudTable>
+
+

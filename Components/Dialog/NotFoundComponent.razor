@@ -1,0 +1,36 @@
+﻿@inject NavigationManager navigationManager;
+@inject IAuthenticationViewModel authenticationViewModel;
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="BaseViewModel.DefaultTheme"/>
+<MudCard Elevation="0" style="color: white; background-color: #045174; display: flex; align-items: center; justify-content: center; height: 100vh;flex-direction:column; text-align: center;">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudImage Style="width: 250px;" Src="images/logo.png"/>
+            <MudText Typo="Typo.h4">Ooops! Etwas ist schiefgelaufen.</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText Typo="Typo.body2">Die angeforderte Seite konnte nicht gefunden werden. Bitte überprüfen Sie die URL oder kehren Sie zur Startseite zurück.</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Class="mt-10 w-100 mb-10" @onclick="NavigateBack">Zurück zur Startseite</MudButton>
+    </MudCardContent>
+</MudCard>
+
+@code {
+
+    private async Task NavigateBack()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity!.IsAuthenticated)
+        {
+            navigationManager.NavigateTo("/feed");
+        }
+        else
+        {
+            navigationManager.NavigateTo("/");
+        }
+    }
+
+}

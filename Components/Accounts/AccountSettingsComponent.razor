@@ -1,0 +1,31 @@
+@inherits AccountSettingsViewModel;
+
+@if (Loading)
+{
+    <MudProgressLinear Color="Color.Tertiary" Value="100" Size="Size.Medium" Style="margin-top: 10px;" Indeterminate="@Loading"/>
+}
+<MudText Typo="Typo.h5" style="margin: 30px 0px 0px 30px;" Color="@Color.Primary">Account Settings</MudText>
+<MudCard Elevation="4" Style="width 100%; margin: 30px 30px 0px 30px; border-color: var(--mud-palette-primary);  ">
+    <MudCardContent>
+        <MudGrid Spacing="0">
+            <MudItem xs="12" sm="6" md="6" lg="4">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" style="font-weight:bold">Firstname</MudText>
+                <MudText Typo="Typo.body1">@Account?.FirstName</MudText>
+
+                <MudText Typo="Typo.subtitle2" style="margin-top: 10px;font-weight:bold" Color="Color.Primary">Lastname</MudText>
+                <MudText Typo="Typo.body1">@Account?.LastName</MudText>
+
+                @if (Account?.MobileNumber != null)
+                {
+                    <MudText Typo="Typo.subtitle2" style="margin-top: 10px; font-weight:bold" Color="Color.Primary">Phone</MudText>
+                    <MudText Typo="Typo.body1">@Account?.MobileNumber</MudText>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudCardContent>
+    <MudCardActions Class="d-flex justify-end">
+        <MudButton Color="Color.Secondary" Class="d-flex justify-center" ButtonType="ButtonType.Submit" Variant="Variant.Filled" OnClick="() => OpenAccountDialog(Account)">
+            Update account
+        </MudButton>
+    </MudCardActions>
+</MudCard>

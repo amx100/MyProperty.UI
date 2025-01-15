@@ -1,0 +1,20 @@
+﻿<MudDialog style="width:inherit">
+    <DialogContent>
+        <MudText>@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="Reject">Ablehnen</MudButton>
+        <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="Accept">Akzeptieren</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public string ContentText { get; set; }
+    [Parameter] public string ButtonText { get; set; }
+    [Parameter] public Color Color { get; set; }
+
+    void Accept() => MudDialog.Close(DialogResult.Ok(true));
+    void Reject() => MudDialog.Close(DialogResult.Ok(false));
+    void Cancel() => MudDialog.Cancel();
+}

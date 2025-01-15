@@ -1,0 +1,78 @@
+﻿@inherits PropertyFormViewModel
+
+@if (PropertyCreate != null && PropertyCreate.PropertyId == 0)  
+    
+{
+    <MudDialog Style="width:inherit">
+        <DialogContent>
+            <MudCard>
+                <MudCardContent>
+                    <MudItem xs="12">
+                        <MudTextField Label="Property Name" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
+                                      @bind-Value="PropertyCreate.Title" For="@(() => PropertyCreate.Title)" />
+
+                        <MudTextField Label="Description" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
+                                      @bind-Value="PropertyCreate.Description" For="@(() => PropertyCreate.Description)" />
+
+                                           <MudTextField Label="Address" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
+                                      @bind-Value="PropertyCreate.Address" For="@(() => PropertyCreate.Address)" />
+
+                        <MudNumericField Label="Price" Variant="Variant.Outlined" Immediate=true
+                                         @bind-Value="PropertyCreate.Price" For="@(() => PropertyCreate.Price)" />
+
+                        <MudTextField Label="Property Type" Variant="Variant.Outlined" Immediate=true
+                                      @bind-Value="PropertyCreate.PropertyType" For="@(() => PropertyCreate.PropertyType)" />
+
+                        <MudTextField Label="Status" Variant="Variant.Outlined" Immediate=true
+                                      @bind-Value="PropertyCreate.Status" For="@(() => PropertyCreate.Status)" />
+
+
+                        <MudNumericField Label="Size (sqm)" Variant="Variant.Outlined" Immediate=true
+                                         @bind-Value="PropertyCreate.Area" For="@(() => PropertyCreate.Area)" />
+                    </MudItem>
+                </MudCardContent>
+            </MudCard>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Color="Color.Tertiary" Variant="Variant.Filled" OnClick="() => Cancel()">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Disabled="@Disabled" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="() => CreateOrUpdate()">Save</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+else
+{
+    <MudDialog Style="width:inherit">
+        <DialogContent>
+            <MudCard>
+                <MudCardContent>
+                    <MudItem xs="12">
+                        <MudTextField Label="Property Title" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
+                                      @bind-Value="PropertyUpdate.Title" For="@(() => PropertyUpdate.Title)" />
+
+                        <MudTextField Label="Description" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
+                                      @bind-Value="PropertyUpdate.Description" For="@(() => PropertyUpdate.Description)" />
+
+                        <MudTextField Label="Location" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
+                                      @bind-Value="PropertyUpdate.Address" For="@(() => PropertyUpdate.Address)" />
+
+                        <MudNumericField Label="Price" Variant="Variant.Outlined" Immediate=true
+                                         @bind-Value="PropertyUpdate.Price" For="@(() => PropertyUpdate.Price)" />
+
+                        <MudNumericField Label="Property Type" Variant="Variant.Outlined" Immediate=true
+                                         @bind-Value="PropertyUpdate.PropertyType" For="@(() => PropertyUpdate.PropertyType)" />
+
+                        <MudNumericField Label="Status" Variant="Variant.Outlined" Immediate=true
+                                         @bind-Value="PropertyUpdate.Status" For="@(() => PropertyUpdate.Status)" />
+
+                        <MudNumericField Label="Size (sqm)" Variant="Variant.Outlined" Immediate=true
+                                         @bind-Value="PropertyUpdate.Area" For="@(() => PropertyUpdate.Area)" />
+                    </MudItem>
+                </MudCardContent>
+            </MudCard>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Color="Color.Tertiary" Variant="Variant.Filled" OnClick="() => Cancel()">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Disabled="@Disabled" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="() => CreateOrUpdate()">Save</MudButton>
+        </DialogActions>
+    </MudDialog>
+}

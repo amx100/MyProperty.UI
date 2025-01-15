@@ -1,0 +1,40 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h5" Class="dialog-title">
+            GEHEIMHALTUNGSVEREINBARUNG
+        </MudText>
+        <MudText Class="dialog-content">
+            Ich stimme zu, dass Ich alle Informationen, die ich über diese Plattform erhalte - einschließlich, aber nicht beschränkt auf Unternehmensdaten, persönliche Daten von Verkäufern und Käufern sowie jegliche Kommunikation und Dokumente, die über diese App ausgetauscht werden - streng vertraulich behandle.
+            Ich verpflichte mich dazu, diese Informationen nicht für persönliche Zwecke oder außerhalb des vorgesehenen Kauf- bzw. Verkaufsprozesses zu nutzen. Des Weiteren versichere ich, diese Informationen nicht an Dritte weiterzugeben oder auf irgendeine Weise zu verbreiten, es sei denn, dies ist für die Durchführung einer Transaktion im Rahmen dieser Plattform erforderlich und geschieht in Übereinstimmung mit den Datenschutzbestimmungen der App.
+            Mir ist bewusst, dass ein Verstoß gegen diese Vertraulichkeitsvereinbarung rechtliche Konsequenzen nach sich ziehen kann und zum Ausschluss von der Plattform führen kann.
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+            <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="Reject">Abbrechen</MudButton>
+            <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="Accept">Akzeptieren</MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = new();
+    [Parameter] public string ContentText { get; set; } = string.Empty;
+    [Parameter] public string ButtonText { get; set; } = string.Empty;
+    [Parameter] public Color Color { get; set; }
+
+    void Accept() => MudDialog.Close(DialogResult.Ok(true));
+    void Reject() => MudDialog.Close(DialogResult.Ok(false));
+}
+
+<style>
+    .dialog-title {
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 1em; /* Spacing after title */
+    }
+    .dialog-content {
+        margin-bottom: 2em; /* Spacing before buttons */
+    }
+</style>

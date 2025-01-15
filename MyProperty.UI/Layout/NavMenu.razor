@@ -1,0 +1,40 @@
+﻿@inject IAuthenticationViewModel AuthenticationViewModel;
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager;
+@inject ILocalStorageService LocalStorage;
+
+
+<div style="padding:8%; height: 100%;">
+    <MudNavMenu Class="mud-width-full " Color="Color.Primary">
+        <div style="width:100%; margin:0 auto; padding:10px">
+            <MudText Typo="Typo.h5" Color="Color.Tertiary">Hello @AccountFirstName</MudText>
+        </div>
+        <MudDivider Class="my-2"/>
+        <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Home" IconColor="Color.Tertiary">Dashboard</MudNavLink>
+        <AuthorizeView Roles="User">
+            <Authorized>
+                <MudNavLink Href="/properties" Icon="@Icons.Material.Filled.Business" IconColor="Color.Tertiary">Properties</MudNavLink>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <MudNavLink Href="/properties" Icon="@Icons.Material.Filled.Business" IconColor="Color.Tertiary">Properties</MudNavLink>
+            </Authorized>
+        </AuthorizeView>
+        <MudNavLink Href="/accountsettings" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Tertiary">Account Settings</MudNavLink>
+     
+    </MudNavMenu>
+    <div style="width:84%;padding:6px;text-align:center; position:absolute; bottom:0">
+        <MudButton style="width:100%;" OnClick="AuthenticationViewModel.Logout" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Logout" Color="Color.Secondary">Logout</MudButton>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+    private string? AccountFirstName { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        AccountFirstName = await LocalStorage.GetItemAsync<string>("accountFirstName") ?? "User";
+    }
+}

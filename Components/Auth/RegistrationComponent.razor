@@ -1,0 +1,47 @@
+﻿@inherits RegistrationViewModel
+
+<EditForm Model="Registration" OnValidSubmit="ExecuteRegistration" style="align-items:center; display:flex; flex-direction:column; margin-top:20px; ">
+    <DataAnnotationsValidator/>
+    <MudCard Style="width:90%;" Elevation="0">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Color="@Color.Primary" Typo="Typo.h5"> Register now!​</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid Spacing="1">
+                <MudItem xs="6">
+                    <MudTextField Label="Firstname" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
+                                  @bind-Value="Registration.FirstName" For="@(() => Registration.FirstName)"/>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTextField Label="Lastname" Class="" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
+                                  @bind-Value="Registration.LastName" For="@(() => Registration.LastName)"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="E-Mail" For="@(() => Registration.Email)" Class="" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
+                                  Validation="@(new EmailAddressAttribute() { ErrorMessage = "Bad email format." })"
+                                  @bind-Value="Registration.Email"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Phone" Class="" Variant="Variant.Outlined"
+                                  @bind-Value="Registration.MobileNumber" For="@(() => Registration.MobileNumber)"/>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTextField Label="Password" Class="" InputType="@PasswordInput" Variant="Variant.Outlined" Immediate
+                                  @bind-Value="Registration.Password" For="@(() => Registration.Password)" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ShowHidePassword" AdornmentAriaLabel="Show Password"/>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTextField Label="Confirm password" Class="" InputType="@PasswordInput" Variant="Variant.Outlined" Immediate
+                                  @bind-Value="Registration.ConfirmPassword" For="@(() => Registration.ConfirmPassword)" Adornment="Adornment.End" Input AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ShowHidePassword" AdornmentAriaLabel="Show Password"/>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions Style="display:flex; flex-direction:column">
+            <MudButton ButtonType="ButtonType.Submit" Class="mb-2" Disabled="string.IsNullOrEmpty(Registration.Email) || string.IsNullOrEmpty(Registration.Password) || Registration.Password != Registration.ConfirmPassword" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
+                Register
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-3 w-100 mb-10" @onclick=" NavigateToLogin"> Login</MudButton>
+        </MudCardActions>
+    </MudCard>
+</EditForm>

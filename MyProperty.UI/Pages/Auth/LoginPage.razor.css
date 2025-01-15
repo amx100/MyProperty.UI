@@ -1,0 +1,26 @@
+﻿.form {
+    /* display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 150px;
+    max-width: 500px; */
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    min-width: 200px;
+    max-width: 800px;
+}
+
+.left {
+    background-size: cover;
+    position: relative;
+    text-align: center;
+    color: white;
+}
+
+.centered {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}

@@ -1,0 +1,20 @@
+﻿@inherits AccountUpdateViewModel
+
+<MudDialog Style="width:inherit">
+    <DialogContent>
+        <MudCard>
+            <MudCardContent Style="max-height:450px; overflow-y:scroll">
+                <MudTextField Label="Firstname" Required RequiredError=@ValidationMessage
+                              @bind-Value="Account.FirstName" For="@(() => Account.FirstName)"/>
+                <MudTextField Label="Lastname" Class="mt-3" Required RequiredError=@ValidationMessage
+                              @bind-Value="Account.LastName" For="@(() => Account.LastName)"/>
+                <MudTextField Label="Phone" Class="mt-3"
+                              @bind-Value="Account.MobileNumber" For="@(() => Account.MobileNumber)"/>
+            </MudCardContent>
+        </MudCard>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="() => Cancel()">Cancel</MudButton>
+        <MudButton ButtonType="ButtonType.Submit" Disabled="@IsDisabled" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="() => UpdateAccount(Account)">Save</MudButton>
+    </DialogActions>
+</MudDialog>
