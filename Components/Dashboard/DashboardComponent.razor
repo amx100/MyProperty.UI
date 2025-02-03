@@ -1,8 +1,16 @@
-﻿@using Contract
+﻿@using Components.Reservations
+@using Contract
 @using System.Collections.ObjectModel
 @using Microsoft.Extensions.Logging
+@using Services.ReservationService
+@using System.Security.Claims
 @inject IPropertyService PropertyService
+@inject IReservationService ReservationService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ILogger<DashboardComponent> Logger
+@inject TokenStorage tokenStorage
 
 <div class="row g-4">
     @if (_properties == null)
@@ -55,6 +63,23 @@
                         </div>
                         <div class="d-grid gap-2">
                             <a href="/properties/@property.PropertyId" class="btn btn-outline-primary">View Details</a>
+                            @if (property.Status == "Available")
+                            {
+                                <MudButton Color="Color.Primary" 
+                                          Variant="Variant.Filled" 
+                                          OnClick="@(() => CreateReservation(property))"
+                                          Disabled="@(property.Status != "Available")">
+                                  Make Reservation
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Color="Color.Error" 
+                                          Variant="Variant.Filled" 
+                                          Disabled="true">
+                                  @property.Status
+                                </MudButton>
+                            }
                         </div>
                     </div>
                 </div>
@@ -65,23 +90,115 @@
 
 @code {
     private ObservableCollection<PropertyDto> _properties;
+    private string? _currentUserId;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            
+            Console.WriteLine($"Is authenticated: {user.Identity?.IsAuthenticated}");
+            Console.WriteLine("All claims:");
+            foreach (var claim in user.Claims)
+            {
+                Console.WriteLine($"Type: {claim.Type}, Value: {claim.Value}");
+            }
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? 
+                               user.FindFirst("sub")?.Value ??
+                               user.FindFirst("nameid")?.Value ??
+                               user.FindFirst("userId")?.Value ??
+                               user.FindFirst("Id")?.Value;
+
+                Console.WriteLine($"Current user ID: {_currentUserId}");
+            }
+            else
+            {
+                Console.WriteLine("User is not authenticated");
+            }
+
             Logger.LogInformation("Starting to load properties...");
             _properties = await PropertyService.GetAll();
             Logger.LogInformation($"Loaded {_properties?.Count ?? 0} properties");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading properties");
+            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
             _properties = new ObservableCollection<PropertyDto>();
         }
-        finally
+    }
+
+    private async Task CreateReservation(PropertyDto property)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (!user.Identity?.IsAuthenticated ?? true)
         {
+            Snackbar.Add("Please login to make a reservation", Severity.Warning);
+            return;
+        }
+
+        // Prvo pokušaj iz claims-a
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        // Ako nema u claims-u, uzmi iz storage-a
+        if (string.IsNullOrEmpty(userId))
+        {
+            userId = await tokenStorage.GetAccountId();
+        }
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            Snackbar.Add("Unable to identify user. Please try logging in again.", Severity.Error);
+            return;
+        }
+
+        if (property?.PropertyId == 0 || string.IsNullOrEmpty(property?.Title))
+        {
+            Snackbar.Add("Invalid property information", Severity.Error);
+            return;
+        }
+
+        Console.WriteLine($"Creating reservation with UserId: {userId}, PropertyId: {property.PropertyId}");
+
+        var parameters = new DialogParameters
+        {
+            ["PropertyId"] = property.PropertyId,
+            ["AccountId"] = userId,
+            ["PropertyTitle"] = property.Title
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ReservationFormDialog>("Make Reservation", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await RefreshProperties();
+        }
+    }
+
+    private async Task RefreshProperties()
+    {
+        try
+        {
+            _properties = await PropertyService.GetAll();
             StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error refreshing properties");
         }
     }
 }

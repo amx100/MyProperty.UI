@@ -1,0 +1,109 @@
+@using Contract
+@using Services.ReservationService
+@inject IReservationService ReservationService
+@inject ISnackbar Snackbar
+
+<MudTable Items="@Reservations" Dense="true" Hover="true" Loading="@_loading">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Reservations Management</MudText>
+        <MudSpacer />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Property</MudTh>
+        <MudTh>User</MudTh>
+        <MudTh>Start Date</MudTh>
+        <MudTh>End Date</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.PropertyId</MudTd>
+        <MudTd>@context.AccountId</MudTd>
+        <MudTd>@context.StartDate.ToShortDateString()</MudTd>
+        <MudTd>@context.EndDate.ToShortDateString()</MudTd>
+        <MudTd>@context.Status</MudTd>
+        <MudTd>
+            @if (context.Status == "Pending")
+            {
+                <MudButton Color="Color.Success" 
+                          Variant="Variant.Filled" 
+                          Size="Size.Small"
+                          OnClick="@(() => UpdateReservationStatus(context.Id, "Confirmed"))">
+                    Approve
+                </MudButton>
+                <MudButton Color="Color.Error" 
+                          Variant="Variant.Filled" 
+                          Size="Size.Small"
+                          OnClick="@(() => UpdateReservationStatus(context.Id, "Declined"))">
+                    Decline
+                </MudButton>
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private bool _loading = true;
+    private List<ReservationDto> Reservations { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReservations();
+    }
+
+    private async Task LoadReservations()
+    {
+        try
+        {
+            _loading = true;
+            var reservations = await ReservationService.GetAll();
+            if (reservations != null)
+            {
+                Reservations = reservations.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading reservations", Severity.Error);
+            Console.WriteLine($"Error loading reservations: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateReservationStatus(int reservationId, string status)
+    {
+        try
+        {
+            var reservation = Reservations.FirstOrDefault(r => r.Id == reservationId);
+            if (reservation == null) return;
+
+            var updateDto = new ReservationUpdateDto
+            {
+                Id = reservationId,
+                PropertyId = reservation.PropertyId,
+                Status = status
+            };
+
+            var response = await ReservationService.Update(reservationId, updateDto);
+            
+            if (response.IsSuccess)
+            {
+                Snackbar.Add($"Reservation {status.ToLower()} successfully", Severity.Success);
+                await LoadReservations();
+            }
+            else
+            {
+                Snackbar.Add(response.Message ?? $"Failed to {status.ToLower()} reservation", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error updating reservation", Severity.Error);
+            Console.WriteLine($"Error updating reservation: {ex.Message}");
+        }
+    }
+} 
