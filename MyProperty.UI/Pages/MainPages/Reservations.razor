@@ -1,0 +1,13 @@
+@page "/reservations"
+@layout MainLayout
+@using Components.Reservations
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Reservations - MyProperty</PageTitle>
+
+<div class="container-fluid p-4">
+    <h1 class="mb-4">Reservations</h1>
+    <ReservationManagementComponent/>
+</div>
+    

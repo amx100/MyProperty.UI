@@ -11,6 +11,14 @@ builder.Services.AddSwaggerGen();
 // Register services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IApiService, ApiService>();
+builder.Services.AddScoped<TokenStorage>();
+builder.Services.AddScoped<AuthenticationHandler>();
+
+builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+{
+    client.BaseAddress = new Uri(ApiEndpoints.BaseUrl);
+})
+.AddHttpMessageHandler<AuthenticationHandler>();
 
 var app = builder.Build();
 

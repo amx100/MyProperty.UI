@@ -10,7 +10,7 @@ public interface IReservationService
 
 	Task<GeneralResponseDto> Create(ReservationCreateDto reservationDto, CancellationToken cancellationToken = default);
 
-	Task<GeneralResponseDto> Update(int reservationId, ReservationUpdateDto reservationDto, CancellationToken cancellationToken = default);
+	Task<GeneralResponseDto> Update(int id, ReservationUpdateDto updateDto, CancellationToken cancellationToken = default);
 
 	Task<GeneralResponseDto> Delete(int reservationId, CancellationToken cancellationToken = default);
 }

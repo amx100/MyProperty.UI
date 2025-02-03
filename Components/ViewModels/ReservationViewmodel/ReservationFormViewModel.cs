@@ -54,7 +54,6 @@ namespace ViewModels
 		public void Cancel() => MudDialog!.Cancel();
 
 		public bool Disabled =>
-			(ReservationCreate != null && string.IsNullOrWhiteSpace(ReservationCreate.AccountId)) ||
-			(ReservationUpdate != null && string.IsNullOrWhiteSpace(ReservationUpdate.AccountId));
+			(ReservationCreate != null && string.IsNullOrWhiteSpace(ReservationCreate.AccountId));
 	}
 }

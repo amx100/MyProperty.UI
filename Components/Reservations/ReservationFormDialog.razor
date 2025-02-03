@@ -77,13 +77,13 @@
         {
             PropertyId = PropertyId,
             AccountId = AccountId,
-            StartDate = _dateRange.Start.Value,
-            EndDate = _dateRange.End.Value
+            StartDate = _dateRange.Start.Value.Date,
+            EndDate = _dateRange.End.Value.Date
         };
 
         try
         {
-            Console.WriteLine($"Creating reservation for Property {PropertyId} by user {AccountId}");
+            Console.WriteLine($"Creating reservation: Start={reservation.StartDate:yyyy-MM-dd}, End={reservation.EndDate:yyyy-MM-dd}");
             var response = await ReservationService.Create(reservation);
             
             if (response.IsSuccess)

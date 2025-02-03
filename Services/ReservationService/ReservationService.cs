@@ -39,21 +39,68 @@ namespace Services.ReservationService
 			}
 		}
 
-		public async Task<GeneralResponseDto> Update(int reservationId, ReservationUpdateDto reservationDto, CancellationToken cancellationToken = default)
+		public async Task<GeneralResponseDto> Update(int id, ReservationUpdateDto updateDto, CancellationToken cancellationToken = default)
 		{
 			try
 			{
-				var response = await apiService.Put($"{ApiEndpoints.PropertyController}/update/{reservationId}", reservationDto);
-				if (!response.IsSuccessStatusCode) return null!;
-				await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-				var res = await JsonSerializer.DeserializeAsync<GeneralResponseDto>(responseStream, _options,
-					cancellationToken);
-				return res ?? null!;
+				var url = $"{ApiEndpoints.ReservationController}/update/{id}";
+				
+				Console.WriteLine("=== Starting Reservation Update ===");
+				Console.WriteLine($"URL: {url}");
+				Console.WriteLine($"Request Data: {JsonSerializer.Serialize(updateDto)}");
+
+				var response = await apiService.Put(url, updateDto);
+				var content = await response.Content.ReadAsStringAsync(cancellationToken);
+				
+				Console.WriteLine($"Response Status: {(int)response.StatusCode} {response.StatusCode}");
+				Console.WriteLine($"Response Content: {content}");
+
+				if (!response.IsSuccessStatusCode)
+				{
+					if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+					{
+						return new GeneralResponseDto 
+						{ 
+							IsSuccess = false, 
+							Message = "Unauthorized. Please check if you're logged in with admin rights." 
+						};
+					}
+
+					return new GeneralResponseDto 
+					{ 
+						IsSuccess = false, 
+						Message = $"Server error: {response.StatusCode} - {content}" 
+					};
+				}
+
+				try
+				{
+					var result = JsonSerializer.Deserialize<GeneralResponseDto>(content, _options);
+					return result ?? new GeneralResponseDto 
+					{ 
+						IsSuccess = true,
+						Message = $"Reservation status updated to {updateDto.Status} successfully"
+					};
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing response: {ex.Message}");
+					return new GeneralResponseDto 
+					{ 
+						IsSuccess = false,
+						Message = $"Error processing server response: {ex.Message}"
+					};
+				}
 			}
-			catch (HttpRequestException ex)
+			catch (Exception ex)
 			{
-				Console.WriteLine(ex.Message);
-				return null!;
+				Console.WriteLine($"Exception in Update: {ex.Message}");
+				Console.WriteLine($"Stack trace: {ex.StackTrace}");
+				return new GeneralResponseDto 
+				{ 
+					IsSuccess = false, 
+					Message = $"Error: {ex.Message}" 
+				};
 			}
 		}
 
@@ -61,17 +108,45 @@ namespace Services.ReservationService
 		{
 			try
 			{
+				Console.WriteLine($"Fetching reservations from: {ApiEndpoints.ReservationController}");
 				var response = await apiService.Get($"{ApiEndpoints.ReservationController}");
-				if (!response.IsSuccessStatusCode) return null!;
+				
+				if (!response.IsSuccessStatusCode)
+				{
+					var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+					Console.WriteLine($"Error fetching reservations. Status: {response.StatusCode}, Content: {errorContent}");
+					return new ObservableCollection<ReservationDto>();
+				}
+
 				await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-				var res = await JsonSerializer.DeserializeAsync<ObservableCollection<ReservationDto>>(responseStream, _options,
+				var reservations = await JsonSerializer.DeserializeAsync<ObservableCollection<ReservationDto>>(
+					responseStream, 
+					_options,
 					cancellationToken);
-				return res ?? null!;
+
+				if (reservations == null)
+				{
+					Console.WriteLine("No reservations found or deserialization failed");
+					return new ObservableCollection<ReservationDto>();
+				}
+
+				Console.WriteLine($"Successfully fetched {reservations.Count} reservations");
+				return reservations;
 			}
 			catch (HttpRequestException ex)
 			{
-				Console.WriteLine(ex.Message);
-				return null!;
+				Console.WriteLine($"HTTP request error in GetAll: {ex.Message}");
+				return new ObservableCollection<ReservationDto>();
+			}
+			catch (JsonException ex)
+			{
+				Console.WriteLine($"JSON deserialization error in GetAll: {ex.Message}");
+				return new ObservableCollection<ReservationDto>();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Unexpected error in GetAll: {ex.Message}");
+				return new ObservableCollection<ReservationDto>();
 			}
 		}
 
