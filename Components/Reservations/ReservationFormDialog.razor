@@ -43,6 +43,8 @@
     [Parameter] public int PropertyId { get; set; }
     [Parameter] public string AccountId { get; set; }
     [Parameter] public string PropertyTitle { get; set; }
+    [Parameter] public DateTime? StartDate { get; set; }
+    [Parameter] public DateTime? EndDate { get; set; }
 
     private DateRange _dateRange = new DateRange();
     private string _errorMessage;
@@ -55,8 +57,11 @@
             Console.WriteLine($"Invalid parameters - AccountId: {AccountId}, PropertyId: {PropertyId}, Title: {PropertyTitle}");
         }
         
-        _dateRange.Start = DateTime.Today;
-        _dateRange.End = DateTime.Today.AddDays(7);
+        // Initialize date range with passed parameters or default values
+        _dateRange = new DateRange(
+            StartDate ?? DateTime.Today,
+            EndDate ?? DateTime.Today.AddDays(7)
+        );
     }
 
     private async Task Submit()

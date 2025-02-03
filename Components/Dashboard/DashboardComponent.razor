@@ -143,10 +143,8 @@
             return;
         }
 
-        // Prvo pokušaj iz claims-a
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         
-        // Ako nema u claims-u, uzmi iz storage-a
         if (string.IsNullOrEmpty(userId))
         {
             userId = await tokenStorage.GetAccountId();
@@ -170,7 +168,9 @@
         {
             ["PropertyId"] = property.PropertyId,
             ["AccountId"] = userId,
-            ["PropertyTitle"] = property.Title
+            ["PropertyTitle"] = property.Title,
+            ["StartDate"] = DateTime.Today,
+            ["EndDate"] = DateTime.Today.AddDays(7)
         };
 
         var options = new DialogOptions

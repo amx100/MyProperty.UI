@@ -11,17 +11,15 @@
         </div>
         <MudDivider Class="my-2"/>
         <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Home" IconColor="Color.Tertiary">Dashboard</MudNavLink>
-        <AuthorizeView Roles="User">
-            <Authorized>
-                <MudNavLink Href="/properties" Icon="@Icons.Material.Filled.Business" IconColor="Color.Tertiary">Properties</MudNavLink>
-            </Authorized>
-        </AuthorizeView>
-        <MudNavLink Href="/reservations" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Tertiary">Reservations</MudNavLink>
+        
         <AuthorizeView Roles="Admin">
             <Authorized>
                 <MudNavLink Href="/properties" Icon="@Icons.Material.Filled.Business" IconColor="Color.Tertiary">Properties</MudNavLink>
             </Authorized>
         </AuthorizeView>
+        
+        <MudNavLink Href="/reservations" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Tertiary">Reservations</MudNavLink>
+        
         <MudNavLink Href="/accountsettings" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Tertiary">Account Settings</MudNavLink>
         
 
