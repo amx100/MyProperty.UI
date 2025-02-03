@@ -1,0 +1,81 @@
+@using Contract
+@using static MudBlazor.CategoryTypes
+@inherits PropertyImageFormViewModel
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @(PropertyImageCreate != null ? "Add New Image" : "Edit Image")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@(PropertyImageCreate ?? (object)PropertyImageUpdate)" @ref="form">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudCard Elevation="0">
+                        <MudCardContent>
+                            <MudTextField Label="Image URL"
+                                          @bind-Value="ImageUrl"
+                                          For="@(() => ImageUrl)"
+                                          Required="true"
+                                          RequiredError="@ValidationMessage" />
+
+                            <MudItem Class="d-flex justify-center mt-4">
+                                @if (!string.IsNullOrEmpty(PropertyImageCreate?.ImageUrl ?? PropertyImageUpdate?.ImageUrl))
+                                {
+                                    <MudImage Src="@(PropertyImageCreate?.ImageUrl ?? PropertyImageUpdate?.ImageUrl)"
+                                              Alt="Property Image"
+                                              Width="200"
+                                              Height="150"
+                                              ObjectFit="ObjectFit.Cover"
+                                              Elevation="25"
+                                              Class="rounded-lg" />
+                                }
+                            </MudItem>
+
+                            <MudItem Class="d-flex justify-center mt-4">
+                                <InputFile id="fileInput"
+                                           OnChange="OnFileSelected"
+                                           Accept=".jpg,.jpeg,.png,.gif"
+                                           hidden />
+                                <MudButton HtmlTag="label"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.CloudUpload"
+                                           for="fileInput">
+                                    Upload Image
+                                </MudButton>
+                            </MudItem>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton DisableElevation Variant="Variant.Filled" OnClick="@(() => MudDialogInstance?.Cancel())">Cancel</MudButton>
+        <MudButton DisableElevation Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateOrUpdate" Loading="@_processing" Disabled="@Disabled">
+            @(PropertyImageCreate != null ? "Create" : "Update")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private MudForm form;
+    private bool _processing;
+
+    [CascadingParameter]
+    MudDialogInstance MudDialogInstance { get; set; }
+
+    private string ImageUrl
+    {
+        get => PropertyImageCreate?.ImageUrl ?? PropertyImageUpdate?.ImageUrl ?? string.Empty;
+        set
+        {
+            if (PropertyImageCreate != null)
+                PropertyImageCreate.ImageUrl = value;
+            else if (PropertyImageUpdate != null)
+                PropertyImageUpdate.ImageUrl = value;
+        }
+    }
+}

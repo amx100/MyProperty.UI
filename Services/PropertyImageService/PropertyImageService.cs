@@ -13,16 +13,44 @@ namespace Services
 		{
 			try
 			{
-				var response = await apiService.Post($"{ApiEndpoints.PropertyImageController}/create", imageDto);
-				if (!response.IsSuccessStatusCode) return null!;
+				imageDto.PropertyId = propertyId;
+				
+				var url = $"{ApiEndpoints.PropertyImageController}/{propertyId}/images/upload";
+				Console.WriteLine($"Creating image for property {propertyId}");
+				Console.WriteLine($"Request URL: {url}");
+				Console.WriteLine($"Image URL length: {imageDto.ImageUrl?.Length ?? 0}");
+
+				var response = await apiService.Post(url, imageDto);
+				
+				if (!response.IsSuccessStatusCode)
+				{
+					var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+					Console.WriteLine($"Error creating image. Status: {response.StatusCode}");
+					Console.WriteLine($"Response content: {errorContent}");
+					return new GeneralResponseDto 
+					{ 
+						IsSuccess = false, 
+						Message = $"Failed to create image. Status: {response.StatusCode}. Details: {errorContent}" 
+					};
+				}
+
 				await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-				var res = await JsonSerializer.DeserializeAsync<GeneralResponseDto>(responseStream, _options, cancellationToken);
-				return res ?? null!;
+				var result = await JsonSerializer.DeserializeAsync<GeneralResponseDto>(responseStream, _options, cancellationToken);
+				
+				return result ?? new GeneralResponseDto 
+				{ 
+					IsSuccess = false, 
+					Message = "Failed to deserialize response" 
+				};
 			}
 			catch (HttpRequestException ex)
 			{
-				Console.WriteLine(ex.Message);
-				return null!;
+				Console.WriteLine($"Network error creating image: {ex.Message}");
+				return new GeneralResponseDto 
+				{ 
+					IsSuccess = false, 
+					Message = $"Network error: {ex.Message}" 
+				};
 			}
 		}
 
@@ -30,7 +58,7 @@ namespace Services
 		{
 			try
 			{
-				var response = await apiService.Put($"{ApiEndpoints.PropertyImageController}/update/{imageId}", imageDto);
+				var response = await apiService.Put($"{ApiEndpoints.PropertyImageController}/{propertyId}/images/update/{imageId}", imageDto);
 				if (!response.IsSuccessStatusCode) return null!;
 				await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 				var res = await JsonSerializer.DeserializeAsync<GeneralResponseDto>(responseStream, _options, cancellationToken);
@@ -46,7 +74,7 @@ namespace Services
 		{
 			try
 			{
-				var response = await apiService.Delete($"{ApiEndpoints.PropertyImageController}/{propertyImageId}");
+				var response = await apiService.Delete($"{ApiEndpoints.PropertyImageController}/{propertyImageId}/images/delete/{propertyImageId}");
 				return response.IsSuccessStatusCode
 					? new GeneralResponseDto { IsSuccess = true }
 					: new GeneralResponseDto { IsSuccess = false };
@@ -62,7 +90,7 @@ namespace Services
 		{
 			try
 			{
-				var response = await apiService.Get($"{ApiEndpoints.PropertyImageController}");
+				var response = await apiService.Get($"{ApiEndpoints.PropertyImageController}/{propertyId}/images");
 				if (!response.IsSuccessStatusCode) return null!;
 				await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 				var res = await JsonSerializer.DeserializeAsync<ObservableCollection<PropertyImageDto>>(responseStream, _options, cancellationToken);
@@ -75,11 +103,11 @@ namespace Services
 			}
 		}
 
-		public async Task<PropertyImageDto> GetById(int propertyimageId, int imageId, CancellationToken cancellationToken = default)
+		public async Task<PropertyImageDto> GetById(int propertyId, int imageId, CancellationToken cancellationToken = default)
 		{
 			try
 			{
-				var response = await apiService.Get($"{ApiEndpoints.PropertyImageController}/{propertyimageId}");
+				var response = await apiService.Get($"{ApiEndpoints.PropertyImageController}/{propertyId}/images/{imageId}");
 				if (!response.IsSuccessStatusCode) return null!;
 				await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 				var res = await JsonSerializer.DeserializeAsync<PropertyImageDto>(responseStream, _options,

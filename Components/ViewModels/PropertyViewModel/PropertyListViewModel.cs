@@ -106,5 +106,32 @@ namespace ViewModels
                 Snackbar!.Add(errorMessage, Severity.Error);
             }
         }
+
+        protected async Task ManageImages(PropertyDto property)
+        {
+            var parameters = new DialogParameters
+            {
+                ["PropertyId"] = property.PropertyId
+            };
+
+            var options = new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            };
+
+            var dialog = await DialogService!.ShowAsync<PropertyImageListComponent>(
+                $"Manage Images - {property.Title}",
+                parameters,
+                options);
+
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                await LoadProperties();
+            }
+        }
     }
 }

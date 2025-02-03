@@ -19,6 +19,7 @@
         <col style="width:2px;" />
     </ColGroup>
     <HeaderContent>
+        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Image</MudTh>
         <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Title</MudTh>
         <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Description</MudTh>
          <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Address</MudTh>
@@ -29,6 +30,20 @@
         <MudTh style="color:var(--mud-palette-primary); font-weight: bold;"></MudTh>
     </HeaderContent>
 <RowTemplate Context="property">
+    <MudTd>
+        @if (property.Images != null && property.Images.Any())
+        {
+            <MudImage Src="@property.Images.First().ImageUrl" Alt="Property Image" 
+                      Width="100" Height="75" ObjectFit="ObjectFit.Cover" 
+                      Elevation="25" Class="rounded-lg"/>
+        }
+        else
+        {
+            <MudImage Src="images/no-image.png" Alt="No Image" 
+                      Width="100" Height="75" ObjectFit="ObjectFit.Cover" 
+                      Elevation="25" Class="rounded-lg"/>
+        }
+    </MudTd>
     <MudTd>@property.Title</MudTd>
     <MudTd>@property.Description</MudTd>
     <MudTd>@property.Address</MudTd>
@@ -38,6 +53,10 @@
     <MudTd>@property.Area</MudTd>
     <MudTd>
         <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => CreateOrUpdateProperty(property)" />
+        <MudIconButton Icon="@Icons.Material.Filled.Image" 
+                      OnClick="() => ManageImages(property)"
+                      Color="Color.Primary"
+                      Title="Manage Images" />
     </MudTd>
     <MudTd>
         <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteProperty(property)" />

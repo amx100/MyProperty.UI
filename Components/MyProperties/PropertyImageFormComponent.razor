@@ -1,0 +1,50 @@
+@using Contract
+@inherits PropertyImageFormViewModel
+
+<MudDialog>
+    <DialogContent>
+        <MudCard>
+            <MudCardContent>
+                <MudItem xs="12">
+                    @if (PropertyImageCreate != null)
+                    {
+                        <MudTextField Label="Image URL" 
+                                    Variant="Variant.Outlined" 
+                                    Immediate="true" 
+                                    Required 
+                                    RequiredError="@ValidationMessage"
+                                    @bind-Value="PropertyImageCreate.ImageUrl" />
+                    }
+                    else if (PropertyImageUpdate != null)
+                    {
+                        <MudTextField Label="Image URL" 
+                                    Variant="Variant.Outlined" 
+                                    Immediate="true" 
+                                    Required 
+                                    RequiredError="@ValidationMessage"
+                                    @bind-Value="PropertyImageUpdate.ImageUrl" />
+                    }
+
+                    @* Optional: Add file upload input here if needed *@
+                    <InputFile id="fileInput" OnChange="OnFileSelected" hidden />
+                    <MudButton HtmlTag="label"
+                              Variant="Variant.Filled"
+                              Color="Color.Primary"
+                              StartIcon="@Icons.Material.Filled.CloudUpload"
+                              for="fileInput"
+                              Class="mt-3">
+                        Upload Image
+                    </MudButton>
+                </MudItem>
+            </MudCardContent>
+        </MudCard>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Cancel">Cancel</MudButton>
+        <MudButton ButtonType="ButtonType.Submit" 
+                   Disabled="@Disabled" 
+                   Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   OnClick="CreateOrUpdate">Save</MudButton>
+    </DialogActions>
+</MudDialog> 

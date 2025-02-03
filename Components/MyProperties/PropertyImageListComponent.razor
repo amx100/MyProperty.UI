@@ -1,0 +1,55 @@
+@using Contract
+@inherits PropertyImageListViewModel
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 500px; overflow-y: auto">
+            <MudGrid>
+                <MudItem xs="12" Class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.h6">Property Images</MudText>
+                    <MudButton Variant="Variant.Filled"
+                              Color="Color.Primary"
+                              StartIcon="@Icons.Material.Filled.Add"
+                              OnClick="@(() => CreateOrUpdatePropertyImage(new PropertyImageDto { PropertyId = PropertyId }))">
+                        Add Image
+                    </MudButton>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudGrid>
+                        @if (PropertyImages.Any())
+                        {
+                            @foreach (var image in PropertyImages)
+                            {
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudCard Elevation="4">
+                                        <MudCardMedia Image="@image.ImageUrl"
+                                                     Height="200" />
+                                        <MudCardActions Class="d-flex justify-space-between">
+                                            <MudButton StartIcon="@Icons.Material.Filled.Edit"
+                                                      OnClick="@(() => CreateOrUpdatePropertyImage(image))">
+                                                Edit
+                                            </MudButton>
+                                            <MudButton Color="Color.Error"
+                                                      StartIcon="@Icons.Material.Filled.Delete"
+                                                      OnClick="@(() => DeletePropertyImage(image))">
+                                                Delete
+                                            </MudButton>
+                                        </MudCardActions>
+                                    </MudCard>
+                                </MudItem>
+                            }
+                        }
+                        else
+                        {
+                            <MudItem xs="12">
+                                <MudAlert Severity="Severity.Info">No images added yet.</MudAlert>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudItem>
+            </MudGrid>
+        </MudContainer>
+    </DialogContent>
+</MudDialog> 
+
