@@ -13,6 +13,12 @@ public class RegistrationViewModel : ComponentBaseViewModel
     
     protected string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
 
+    protected override void OnInitialized()
+    {
+        // Set default role for registration
+        Registration.Role = "User";
+    }
+
     protected void ShowHidePassword()
     {
         if (showPassword)
@@ -32,16 +38,27 @@ public class RegistrationViewModel : ComponentBaseViewModel
     protected async Task ExecuteRegistration()
     {
         ShowAuthError = false;
-        var result = await AuthenticationService!.Register(Registration);
-        Snackbar!.Configuration.PositionClass = Defaults.Classes.Position.TopLeft;
-        if (result.IsSuccess)
+        
+        try 
         {
-            Snackbar!.Add("Registration successful!", Severity.Success);
-            NavigationManager!.NavigateTo("/");
+            var result = await AuthenticationService!.Register(Registration);
+            Snackbar!.Configuration.PositionClass = Defaults.Classes.Position.TopLeft;
+            
+            if (result.IsSuccess)
+            {
+                Snackbar!.Add("Registration successful! Please login.", Severity.Success);
+                NavigationManager!.NavigateTo("/");
+            }
+            else
+            {
+                ShowAuthError = true;
+                Snackbar!.Add(result.Message ?? "Registration failed.", Severity.Error);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Snackbar!.Add("Registration failed.", Severity.Error);
+            ShowAuthError = true;
+            Snackbar!.Add($"Registration error: {ex.Message}", Severity.Error);
         }
     }
 

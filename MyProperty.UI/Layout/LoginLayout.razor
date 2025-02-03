@@ -10,6 +10,8 @@
         </MudPaper>
     </MudItem>
     <MudItem xs="12" md="6" Style="align-self: center;">
-        @Body
+        <CascadingValue Value="this">
+            @Body
+        </CascadingValue>
     </MudItem>
 </MudGrid>

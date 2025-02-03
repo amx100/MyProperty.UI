@@ -1,8 +1,8 @@
 ﻿@inherits RegistrationViewModel
 
-<EditForm Model="Registration" OnValidSubmit="ExecuteRegistration" style="align-items:center; display:flex; flex-direction:column; margin-top:20px; ">
+<EditForm Model="Registration" OnValidSubmit="ExecuteRegistration" style="align-items:center; display:flex; flex-direction:column; margin-top:20px; width: 100%;">
     <DataAnnotationsValidator/>
-    <MudCard Style="width:90%;" Elevation="0">
+    <MudCard Style="width:90%; max-width: 800px; margin: auto;" Elevation="0">
         <MudCardHeader>
             <CardHeaderContent>
                 <MudText Color="@Color.Primary" Typo="Typo.h5"> Register now!​</MudText>
@@ -36,12 +36,25 @@
                                   @bind-Value="Registration.ConfirmPassword" For="@(() => Registration.ConfirmPassword)" Adornment="Adornment.End" Input AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ShowHidePassword" AdornmentAriaLabel="Show Password"/>
                 </MudItem>
             </MudGrid>
+            @if (ShowAuthError)
+            {
+                <MudAlert Class="mt-3" Severity="Severity.Error">Registration failed. Please try again.</MudAlert>
+            }
         </MudCardContent>
         <MudCardActions Style="display:flex; flex-direction:column">
-            <MudButton ButtonType="ButtonType.Submit" Class="mb-2" Disabled="string.IsNullOrEmpty(Registration.Email) || string.IsNullOrEmpty(Registration.Password) || Registration.Password != Registration.ConfirmPassword" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
+            <MudButton ButtonType="ButtonType.Submit" Class="mb-2" 
+                      Disabled="@(string.IsNullOrEmpty(Registration.Email) || 
+                                string.IsNullOrEmpty(Registration.Password) || 
+                                Registration.Password != Registration.ConfirmPassword ||
+                                string.IsNullOrEmpty(Registration.FirstName) ||
+                                string.IsNullOrEmpty(Registration.LastName))" 
+                      Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
                 Register
             </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-3 w-100 mb-10" @onclick=" NavigateToLogin"> Login</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" 
+                      Class="mt-3 w-100 mb-10" @onclick="NavigateToLogin">
+                Login
+            </MudButton>
         </MudCardActions>
     </MudCard>
 </EditForm>

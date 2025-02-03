@@ -66,6 +66,6 @@ public class LoginViewModel : ComponentBaseViewModel
 
     protected void Registration()
     {
-        NavigationManager!.NavigateTo("registration");
+        NavigationManager!.NavigateTo("/registration", forceLoad: true);
     }
 }
