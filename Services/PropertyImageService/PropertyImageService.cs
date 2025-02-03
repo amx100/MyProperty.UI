@@ -74,15 +74,50 @@ namespace Services
 		{
 			try
 			{
-				var response = await apiService.Delete($"{ApiEndpoints.PropertyImageController}/{propertyImageId}/images/delete/{propertyImageId}");
-				return response.IsSuccessStatusCode
-					? new GeneralResponseDto { IsSuccess = true }
-					: new GeneralResponseDto { IsSuccess = false };
+				var response = await apiService.Delete($"{ApiEndpoints.PropertyImageController}/images/delete/{propertyImageId}");
+				var content = await response.Content.ReadAsStringAsync(cancellationToken);
+				
+				if (!response.IsSuccessStatusCode)
+				{
+					Console.WriteLine($"Delete image failed with status code: {response.StatusCode}");
+					Console.WriteLine($"Response content: {content}");
+					
+					return new GeneralResponseDto 
+					{ 
+						IsSuccess = false,
+						Message = !string.IsNullOrEmpty(content) 
+							? content 
+							: $"Failed to delete image. Status code: {response.StatusCode}"
+					};
+				}
+
+				try 
+				{
+					var result = JsonSerializer.Deserialize<GeneralResponseDto>(content, _options);
+					if (result != null)
+					{
+						return result;
+					}
+				}
+				catch (JsonException ex)
+				{
+					Console.WriteLine($"Failed to deserialize response: {ex.Message}");
+				}
+
+				return new GeneralResponseDto 
+				{ 
+					IsSuccess = true,
+					Message = "Image successfully deleted"
+				};
 			}
 			catch (HttpRequestException ex)
 			{
-				Console.WriteLine(ex.Message);
-				return new GeneralResponseDto { IsSuccess = false };
+				Console.WriteLine($"Network error during image delete: {ex.Message}");
+				return new GeneralResponseDto 
+				{ 
+					IsSuccess = false,
+					Message = $"Network error: {ex.Message}"
+				};
 			}
 		}
 

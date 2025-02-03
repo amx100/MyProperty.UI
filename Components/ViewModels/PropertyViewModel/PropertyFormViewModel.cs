@@ -13,19 +13,24 @@ namespace ViewModels
 		[Parameter]
 		public PropertyUpdateDto? PropertyUpdate { get; set; }
 
+		private MudForm? form;
+
 		public IEnumerable<string> PropertyTypes { get; set; } = new List<string> { "House", "Apartment", "Office" };
 		public IEnumerable<string> StatusOptions { get; set; } = new List<string> { "Available", "Reserved", "Sold" };
 
-		public string? SelectedPropertyType { get; set; }
-		public string? SelectedStatus { get; set; }
-
 		protected override async Task OnInitializedAsync()
 		{
-			if (PropertyUpdate != null)
+			if (PropertyCreate != null)
 			{
-				SelectedPropertyType = PropertyUpdate.PropertyType;
-				SelectedStatus = PropertyUpdate.Status;
-				StateHasChanged();
+				// Set default values for new properties
+				PropertyCreate.PropertyType = PropertyTypes.First();
+				PropertyCreate.Status = StatusOptions.First();
+			}
+			else if (PropertyUpdate != null)
+			{
+				// Keep existing values for updates
+				PropertyUpdate.PropertyType ??= PropertyTypes.First();
+				PropertyUpdate.Status ??= StatusOptions.First();
 			}
 		}
 
@@ -33,41 +38,68 @@ namespace ViewModels
 		{
 			try
 			{
-				var response = new GeneralResponseDto();
 				if (PropertyCreate != null)
 				{
-					PropertyCreate.PropertyType = SelectedPropertyType;
-					PropertyCreate.Status = SelectedStatus;
-					// Do not check PropertyId for creation
-					response = await PropertyService!.Create(PropertyCreate);
+					// Log the property data being sent
+					Console.WriteLine($"Creating property: Title={PropertyCreate.Title}, " +
+									$"Type={PropertyCreate.PropertyType}, " +
+									$"Status={PropertyCreate.Status}");
+
+					// Ensure required fields are set
+					if (string.IsNullOrWhiteSpace(PropertyCreate.Title) ||
+						string.IsNullOrWhiteSpace(PropertyCreate.Description) ||
+						string.IsNullOrWhiteSpace(PropertyCreate.Address))
+					{
+						Snackbar!.Add("Please fill in all required fields", Severity.Warning);
+						return;
+					}
+
+					var response = await PropertyService!.Create(PropertyCreate);
+					
+					if (response != null && response.IsSuccess)
+					{
+						Snackbar!.Add("Property created successfully!", Severity.Success);
+						MudDialog!.Close(DialogResult.Ok(true));
+					}
+					else
+					{
+						var errorMessage = response?.Message ?? "Failed to create property";
+						Console.WriteLine($"Error creating property: {errorMessage}");
+						Snackbar!.Add(errorMessage, Severity.Error);
+					}
 				}
 				else if (PropertyUpdate != null)
 				{
-					PropertyUpdate.PropertyType = SelectedPropertyType;
-					PropertyUpdate.Status = SelectedStatus;
-					response = await PropertyService!.Update(PropertyUpdate.PropertyId, PropertyUpdate);
+					var response = await PropertyService!.Update(PropertyUpdate.PropertyId, PropertyUpdate);
+					if (response != null && response.IsSuccess)
+					{
+						Snackbar!.Add("Property updated successfully!", Severity.Success);
+						MudDialog!.Close(DialogResult.Ok(true));
+					}
+					else
+					{
+						Snackbar!.Add(response?.Message ?? "Failed to update property", Severity.Error);
+					}
 				}
-
-				HandleResponse(response);
 			}
-			catch (HttpRequestException ex)
+			catch (Exception ex)
 			{
-				Console.WriteLine(ex.Message);
-				MudDialog!.Close(DialogResult.Ok(true));
+				Console.WriteLine($"Error saving property: {ex.Message}");
+				Console.WriteLine($"Stack trace: {ex.StackTrace}");
+				Snackbar!.Add($"Error saving property: {ex.Message}", Severity.Error);
 			}
-		}
-
-		private void HandleResponse(GeneralResponseDto response)
-		{
-			var isSuccess = response?.IsSuccess == true;
-			Snackbar!.Add(isSuccess ? "Success!" : "Error!", isSuccess ? Severity.Success : Severity.Error);
-			MudDialog!.Close(DialogResult.Ok(true));
 		}
 
 		public void Cancel() => MudDialog!.Cancel();
 
 		public bool Disabled =>
-			(PropertyCreate != null && string.IsNullOrWhiteSpace(PropertyCreate.Title)) ||
-			(PropertyUpdate != null && string.IsNullOrWhiteSpace(PropertyUpdate.Title));
+			(PropertyCreate != null && (
+				string.IsNullOrWhiteSpace(PropertyCreate.Title) ||
+				string.IsNullOrWhiteSpace(PropertyCreate.Description) ||
+				string.IsNullOrWhiteSpace(PropertyCreate.Address))) ||
+			(PropertyUpdate != null && (
+				string.IsNullOrWhiteSpace(PropertyUpdate.Title) ||
+				string.IsNullOrWhiteSpace(PropertyUpdate.Description) ||
+				string.IsNullOrWhiteSpace(PropertyUpdate.Address)));
 	}
 }
