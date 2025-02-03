@@ -1,5 +1,5 @@
-﻿@using Contract
-
+﻿@using Components.Dialog
+@using Contract
 @using MudBlazor
 @inherits PropertyListViewModel
 
@@ -54,5 +54,36 @@
         <MudTablePager RowsPerPageString="Items per page" InfoFormat="@InfoFormat" />
     </PagerContent>
 </MudTable>
+
+@code {
+    protected async Task DeleteProperty(PropertyDto property)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", "Are you sure you want to delete this property?");
+        parameters.Add("ButtonText", "Delete");
+        parameters.Add("Color", Color.Error);
+
+        var options = new DialogOptions() 
+        { 
+            CloseButton = true, 
+            MaxWidth = MaxWidth.ExtraSmall 
+        };
+        
+        var dialog = await DialogService!.ShowAsync<ConfirmComponent>("Delete Property", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            Loading = true;
+            StateHasChanged();
+            
+            var response = await PropertyService!.Delete(property.PropertyId);
+            HandleResponse(response, property);
+            
+            Loading = false;
+            StateHasChanged();
+        }
+    }
+}
 
 

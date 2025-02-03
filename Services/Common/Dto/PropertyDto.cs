@@ -34,5 +34,4 @@ public class PropertyUpdateDto
 	public string PropertyType { get; set; }
 	public string Status { get; set; }
 	public double Area { get; set; }
-	public List<int> ImageIds { get; set; } = new List<int>();
 }

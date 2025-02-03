@@ -28,15 +28,60 @@ namespace Services
 		{
 			try
 			{
-				var response = await apiService.Delete($"{ApiEndpoints.PropertyController}/{propertyId}");
-				return response.IsSuccessStatusCode
-					? new GeneralResponseDto { IsSuccess = true }
-					: new GeneralResponseDto { IsSuccess = false };
+				var response = await apiService.Delete($"{ApiEndpoints.PropertyController}/delete/{propertyId}");
+				var content = await response.Content.ReadAsStringAsync(cancellationToken);
+				
+				if (!response.IsSuccessStatusCode)
+				{
+					Console.WriteLine($"Delete failed with status code: {response.StatusCode}");
+					Console.WriteLine($"Response content: {content}");
+					
+					return new GeneralResponseDto 
+					{ 
+						IsSuccess = false,
+						Message = !string.IsNullOrEmpty(content) 
+							? content 
+							: $"Failed to delete property. Status code: {response.StatusCode}"
+					};
+				}
+
+				// Try to deserialize the successful response
+				try 
+				{
+					var result = JsonSerializer.Deserialize<GeneralResponseDto>(content, _options);
+					if (result != null)
+					{
+						return result;
+					}
+				}
+				catch (JsonException ex)
+				{
+					Console.WriteLine($"Failed to deserialize response: {ex.Message}");
+				}
+
+				return new GeneralResponseDto 
+				{ 
+					IsSuccess = true,
+					Message = "Property successfully deleted"
+				};
 			}
 			catch (HttpRequestException ex)
 			{
-				Console.WriteLine(ex.Message);
-				return new GeneralResponseDto { IsSuccess = false };
+				Console.WriteLine($"Network error during delete: {ex.Message}");
+				return new GeneralResponseDto 
+				{ 
+					IsSuccess = false,
+					Message = $"Network error: {ex.Message}"
+				};
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Unexpected error during delete: {ex.Message}");
+				return new GeneralResponseDto 
+				{ 
+					IsSuccess = false,
+					Message = "An unexpected error occurred while deleting the property"
+				};
 			}
 		}
 
@@ -99,3 +144,4 @@ namespace Services
 
 }
 
+//test

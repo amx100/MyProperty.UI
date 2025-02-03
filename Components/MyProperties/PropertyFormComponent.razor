@@ -8,7 +8,7 @@
             <MudCard>
                 <MudCardContent>
                     <MudItem xs="12">
-                        <MudTextField Label="Property Name" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
+                        <MudTextField Label="Property Title" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
                                       @bind-Value="PropertyCreate.Title" For="@(() => PropertyCreate.Title)" />
 
                         <MudTextField Label="Description" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
@@ -27,7 +27,7 @@
                                       @bind-Value="PropertyCreate.Status" For="@(() => PropertyCreate.Status)" />
 
 
-                        <MudNumericField Label="Size (sqm)" Variant="Variant.Outlined" Immediate=true
+                        <MudNumericField Label="Size (sqm)/Area" Variant="Variant.Outlined" Immediate=true
                                          @bind-Value="PropertyCreate.Area" For="@(() => PropertyCreate.Area)" />
                     </MudItem>
                 </MudCardContent>
@@ -58,13 +58,13 @@ else
                         <MudNumericField Label="Price" Variant="Variant.Outlined" Immediate=true
                                          @bind-Value="PropertyUpdate.Price" For="@(() => PropertyUpdate.Price)" />
 
-                        <MudNumericField Label="Property Type" Variant="Variant.Outlined" Immediate=true
+                        <MudTextField Label="Property Type" Variant="Variant.Outlined" Immediate=true
                                          @bind-Value="PropertyUpdate.PropertyType" For="@(() => PropertyUpdate.PropertyType)" />
 
-                        <MudNumericField Label="Status" Variant="Variant.Outlined" Immediate=true
+                        <MudTextField Label="Status" Variant="Variant.Outlined" Immediate=true
                                          @bind-Value="PropertyUpdate.Status" For="@(() => PropertyUpdate.Status)" />
 
-                        <MudNumericField Label="Size (sqm)" Variant="Variant.Outlined" Immediate=true
+                        <MudNumericField Label="Size (sqm)/Area" Variant="Variant.Outlined" Immediate=true
                                          @bind-Value="PropertyUpdate.Area" For="@(() => PropertyUpdate.Area)" />
                     </MudItem>
                 </MudCardContent>

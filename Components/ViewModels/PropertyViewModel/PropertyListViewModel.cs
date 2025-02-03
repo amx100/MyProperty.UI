@@ -90,17 +90,20 @@ namespace ViewModels
                    element.Title!.Contains(SearchPropertyName, StringComparison.OrdinalIgnoreCase);
         }
 
-        private void HandleResponse(GeneralResponseDto response, PropertyDto property)
+        public void HandleResponse(GeneralResponseDto response, PropertyDto property)
         {
             if (response.IsSuccess)
             {
                 Properties.Remove(property);
                 StateHasChanged();
-                Snackbar!.Add("Success!", Severity.Success);
+                Snackbar!.Add("Property successfully deleted!", Severity.Success);
             }
             else
             {
-                Snackbar!.Add("Error", Severity.Error);
+                var errorMessage = !string.IsNullOrEmpty(response.Message) 
+                    ? response.Message 
+                    : "Failed to delete property. Please try again.";
+                Snackbar!.Add(errorMessage, Severity.Error);
             }
         }
     }
