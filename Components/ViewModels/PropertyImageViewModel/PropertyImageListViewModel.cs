@@ -1,4 +1,5 @@
 ﻿using Components.Dialog;
+using Components.MyProperties;
 using Contract;
 using System.Collections.ObjectModel;
 
@@ -6,83 +7,96 @@ namespace ViewModels
 {
     public class PropertyImageListViewModel : ComponentBaseViewModel
     {
-        protected bool Loading;
+        [CascadingParameter] private MudDialogInstance? MudDialog { get; set; }
+        [Parameter] public int PropertyId { get; set; }
 
-        protected ObservableCollection<PropertyImageDto> PropertyImages { get; set; } = new ObservableCollection<PropertyImageDto>();
+        protected ObservableCollection<PropertyImageDto> PropertyImages { get; set; } = new();
 
         protected string? SearchImageUrl { get; set; }
 
-        [Parameter]
-        public int PropertyId { get; set; }
-
         protected override async Task OnInitializedAsync()
         {
-            await LoadPropertyImages(PropertyId);
-            Loading = false;
-        }
-        protected async Task CreateOrUpdatePropertyImage(PropertyImageDto propertyImageDto)
-        {
-            DialogParameters parameters = new DialogParameters();
-            if (propertyImageDto.Id == 0)
-            {
-                var propertyImageCreate = propertyImageDto.Adapt<PropertyImageCreateDto>();
-                parameters = new DialogParameters { ["PropertyImageCreate"] = propertyImageCreate };
-            }
-            else
-            {
-                var propertyImageUpdate = propertyImageDto.Adapt<PropertyImageUpdateDto>();
-                parameters = new DialogParameters { ["PropertyImageUpdate"] = propertyImageUpdate };
-            }
-
-            var options = new DialogOptions
-            {
-                CloseButton = true,
-                MaxWidth = MaxWidth.Medium
-            };
-
-            var dialogTitle = propertyImageDto.Id == 0 ? "Create Property Image" : "Update Property Image";
-            var dialog = await DialogService!.ShowAsync<PropertyImageFormViewModel>(dialogTitle, parameters, options);
-
-            var result = await dialog.Result;
-            if (!result!.Canceled)
-            {
-                StateHasChanged();
-            }
+            await LoadPropertyImages();
         }
 
-        private async Task LoadPropertyImages(int propertyId)
+        private async Task LoadPropertyImages()
         {
             try
             {
-                PropertyImages = await PropertyImageService!.GetAll(propertyId);
-                StateHasChanged();
+                var images = await PropertyImageService!.GetAll(PropertyId);
+                if (images != null)
+                {
+                    PropertyImages = images;
+                    StateHasChanged();
+                }
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"Error loading images: {ex.Message}");
+                Snackbar!.Add("Error loading images", Severity.Error);
             }
         }
 
-        protected async Task DeletePropertyImage(PropertyImageDto propertyImage)
+        protected async Task CreateOrUpdatePropertyImage(PropertyImageDto propertyImage)
         {
             var parameters = new DialogParameters();
-            const string text = "Are you sure you want to delete this property image?";
+            if (propertyImage.Id == 0)
+            {
+                var createDto = new PropertyImageCreateDto { PropertyId = PropertyId };
+                parameters.Add("PropertyImageCreate", createDto);
+            }
+            else
+            {
+                var updateDto = propertyImage.Adapt<PropertyImageUpdateDto>();
+                parameters.Add("PropertyImageUpdate", updateDto);
+            }
+            parameters.Add("PropertyId", PropertyId);
 
-            parameters.Add("ContentText", text);
-            parameters.Add("ButtonText", "Delete");
-            parameters.Add("Color", Color.Success);
+            var options = new DialogOptions 
+            { 
+                CloseButton = true, 
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            };
+            
+            var dialog = await DialogService!.ShowAsync<PropertyImageFormDialog>(
+                propertyImage.Id == 0 ? "Add New Image" : "Edit Image",
+                parameters,
+                options);
 
-            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-            var dialog = await DialogService!.ShowAsync<ConfirmComponent>("Delete Property Image", parameters, options);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                await LoadPropertyImages();
+            }
+        }
+
+        protected async Task DeletePropertyImage(PropertyImageDto image)
+        {
+            var parameters = new DialogParameters
+            {
+                ["ContentText"] = "Are you sure you want to delete this image?",
+                ["ButtonText"] = "Delete",
+                ["Color"] = Color.Error
+            };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = await DialogService!.ShowAsync<ConfirmComponent>("Delete Image", parameters, options);
             var result = await dialog.Result;
 
-            if (result!.Canceled)
+            if (!result.Canceled)
             {
-                return;
+                var response = await PropertyImageService!.Delete(image.Id);
+                if (response.IsSuccess)
+                {
+                    await LoadPropertyImages();
+                    Snackbar!.Add("Image deleted successfully", Severity.Success);
+                }
+                else
+                {
+                    Snackbar!.Add("Error deleting image", Severity.Error);
+                }
             }
-
-            var response = await PropertyImageService!.Delete(propertyImage.Id);
-            HandleResponse(response, propertyImage);
         }
 
         protected bool FilterFunc(PropertyImageDto element)
@@ -91,18 +105,6 @@ namespace ViewModels
                    element.ImageUrl!.Contains(SearchImageUrl, StringComparison.OrdinalIgnoreCase);
         }
 
-        private void HandleResponse(GeneralResponseDto response, PropertyImageDto propertyImage)
-        {
-            if (response.IsSuccess)
-            {
-                PropertyImages.Remove(propertyImage);
-                StateHasChanged();
-                Snackbar!.Add("Success!", Severity.Success);
-            }
-            else
-            {
-                Snackbar!.Add("Error", Severity.Error);
-            }
-        }
+        public void Cancel() => MudDialog?.Cancel();
     }
 }

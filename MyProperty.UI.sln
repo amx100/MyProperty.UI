@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Components", "Components\Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "Services\Services.csproj", "{78249070-5151-4037-ACAA-DC39E1B9D490}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyProperty.UI", "MyProperty.UI\MyProperty.UI.csproj", "{ADDB447E-5375-4F38-A8EE-CC1BD2222095}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyProperty.UI", "MyProperty.UI\MyProperty.UI.csproj", "{ADDB447E-5375-4F38-A8EE-CC1BD2222095}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
