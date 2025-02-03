@@ -5,7 +5,8 @@ namespace Services
     public class AuthenticationService(
         IApiService apiService, 
         HttpClient client, 
-        TokenStorage tokenStorage) : IAuthenticationService
+        TokenStorage tokenStorage,
+        TokenAuthenticationStateProvider authStateProvider) : IAuthenticationService
     {
         private readonly JsonSerializerOptions _options = new() { PropertyNameCaseInsensitive = true };
 
@@ -39,6 +40,9 @@ namespace Services
                     // Store tokens using TokenStorage
                     await tokenStorage.SetTokensAsync(result.AccessToken, result.RefreshToken);
                     await tokenStorage.SetAccountId(result.AccountId);
+
+                    // Notify the authentication state has changed
+                    authStateProvider.StateChanged();
 
                     Console.WriteLine($"Login successful for account: {result.AccountId}");
                 }

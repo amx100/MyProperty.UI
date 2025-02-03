@@ -15,6 +15,7 @@ namespace AuthProviders
         public void StateChanged()
         {
             NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            Console.WriteLine("Authentication state change notified");
         }
 
         private async Task<IEnumerable<Claim>> ParseClaimsFromJwt(string jwt)
@@ -71,21 +72,15 @@ namespace AuthProviders
                 
                 if (string.IsNullOrEmpty(token))
                 {
-                    Console.WriteLine("No access token found");
+                    Console.WriteLine("No access token found - returning anonymous state");
                     return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
                 }
 
-                Console.WriteLine($"Token found: {token}");
+                Console.WriteLine("Token found - creating authenticated state");
                 var claims = await ParseClaimsFromJwt(token);
-                
-                // Debug ispis
-                foreach (var claim in claims)
-                {
-                    Console.WriteLine($"Claim: {claim.Type} = {claim.Value}");
-                }
-                
                 var identity = new ClaimsIdentity(claims, "jwt");
-                return new AuthenticationState(new ClaimsPrincipal(identity));
+                var principal = new ClaimsPrincipal(identity);
+                return new AuthenticationState(principal);
             }
             catch (Exception ex)
             {

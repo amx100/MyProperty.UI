@@ -32,7 +32,7 @@ public class LoginViewModel : ComponentBaseViewModel
         else
         {
             await InsertDataIntoLocalStorage(response);
-            NavigationManager!.NavigateTo("/dashboard");
+            NavigationManager!.NavigateTo("/dashboard", forceLoad: true);
         }
     }
 
