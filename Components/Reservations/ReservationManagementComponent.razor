@@ -1,0 +1,229 @@
+@using Contract
+@using Services.ReservationService
+@using System.Security.Claims
+@inject IReservationService ReservationService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TokenStorage TokenStorage
+
+<AuthorizeView Context="authContext">
+    <Authorized>
+        <MudTable Items="@Reservations" Dense="true" Hover="true" Loading="@_loading">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Reservations Management</MudText>
+                <MudSpacer />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Property</MudTh>
+                <MudTh>User</MudTh>
+                <MudTh>Start Date</MudTh>
+                <MudTh>End Date</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="reservation">
+                <MudTd>@reservation.PropertyId</MudTd>
+                <MudTd>@reservation.AccountId</MudTd>
+                <MudTd>@(reservation.StartDate.Year > 1 ? reservation.StartDate.ToString("dd.MM.yyyy") : "-")</MudTd>
+                <MudTd>@(reservation.EndDate.Year > 1 ? reservation.EndDate.ToString("dd.MM.yyyy") : "-")</MudTd>
+                <MudTd>
+                    <MudChip T="string" Color="@GetStatusColor(reservation.Status)" Size="Size.Small">
+                        @reservation.Status
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    @if (reservation.Status == "Pending")
+                    {
+                        <AuthorizeView Roles="Admin" Context="adminContext">
+                            <Authorized>
+                                <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined">
+                                    <MudButton Color="Color.Success"
+                                              OnClick="@(async () => {
+                                                  Console.WriteLine($"Approving reservation {reservation.Id}");
+                                                  await UpdateReservationStatus(reservation.Id, "Confirmed");
+                                              })">
+                                        <MudIcon Icon="@Icons.Material.Filled.Check" Class="mr-2"/>
+                                        Approve
+                                    </MudButton>
+                                    <MudButton Color="Color.Error"
+                                              OnClick="@(async () => {
+                                                  Console.WriteLine($"Declining reservation {reservation.Id}");
+                                                  await UpdateReservationStatus(reservation.Id, "Declined");
+                                              })">
+                                        <MudIcon Icon="@Icons.Material.Filled.Close" Class="mr-2"/>
+                                        Decline
+                                    </MudButton>
+                                </MudButtonGroup>
+                            </Authorized>
+                        </AuthorizeView>
+                    }
+                    else if (reservation.Status == "Confirmed")
+                    {
+                        <AuthorizeView Roles="Admin" Context="adminContext">
+                            <Authorized>
+                                <MudButton Color="Color.Error"
+                                          Size="Size.Small"
+                                          Variant="Variant.Outlined"
+                                          OnClick="@(async () => {
+                                              Console.WriteLine($"Cancelling reservation {reservation.Id}");
+                                              await UpdateReservationStatus(reservation.Id, "Declined");
+                                          })">
+                                    <MudIcon Icon="@Icons.Material.Filled.Close" Class="mr-2"/>
+                                    Cancel Reservation
+                                </MudButton>
+                            </Authorized>
+                        </AuthorizeView>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="@GetStatusColor(reservation.Status)" Size="Size.Small">
+                            @reservation.Status
+                        </MudChip>
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </Authorized>
+    <NotAuthorized>
+        <MudAlert Severity="Severity.Warning">Please login to view reservations.</MudAlert>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private bool _loading = true;
+    private List<ReservationDto> Reservations { get; set; } = new();
+    private string _currentUserId;
+    private string _userRole;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(_currentUserId))
+                {
+                    _currentUserId = await TokenStorage.GetAccountId();
+                }
+
+                _userRole = user.FindFirst(ClaimTypes.Role)?.Value;
+                await LoadReservations();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
+            Snackbar.Add("Error initializing component", Severity.Error);
+        }
+    }
+
+    private async Task LoadReservations()
+    {
+        try
+        {
+            _loading = true;
+            StateHasChanged();
+
+            Console.WriteLine("Starting to load reservations...");
+            var reservations = await ReservationService.GetAll();
+            
+            if (reservations == null || !reservations.Any())
+            {
+                Console.WriteLine("No reservations returned from service");
+                Reservations = new List<ReservationDto>();
+                return;
+            }
+
+            Console.WriteLine($"Loaded {reservations.Count} reservations");
+            Console.WriteLine($"Current user ID: {_currentUserId}, Role: {_userRole}");
+
+            // Filtriranje rezervacija prema ulozi
+            if (_userRole == "Admin")
+            {
+                // Admin vidi sve rezervacije
+                Reservations = reservations.ToList();
+                Console.WriteLine("Admin view: showing all reservations");
+            }
+            else
+            {
+                // Korisnik vidi samo svoje rezervacije
+                Reservations = reservations.Where(r => r.AccountId == _currentUserId).ToList();
+                Console.WriteLine($"User view: showing {Reservations.Count} reservations for user {_currentUserId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in LoadReservations: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Snackbar.Add("Error loading reservations. Please try again later.", Severity.Error);
+            Reservations = new List<ReservationDto>();
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "Pending" => Color.Warning,
+        "Confirmed" => Color.Success,
+        "Declined" => Color.Error,
+        _ => Color.Default
+    };
+
+    private async Task UpdateReservationStatus(int reservationId, string status)
+    {
+        try
+        {
+            _loading = true;
+            StateHasChanged();
+
+            Console.WriteLine($"Starting status update for reservation {reservationId} to {status}");
+
+            var updateDto = new ReservationUpdateDto
+            {
+                Id = reservationId,
+                Status = status
+            };
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var response = await ReservationService.Update(reservationId, updateDto, cts.Token);
+            
+            Console.WriteLine($"Update response for reservation {reservationId}: Success={response.IsSuccess}, Message={response.Message}");
+
+            if (response.IsSuccess)
+            {
+                var reservation = Reservations.FirstOrDefault(r => r.Id == reservationId);
+                if (reservation != null)
+                {
+                    reservation.Status = status;
+                }
+                Snackbar.Add(response.Message ?? $"Reservation {status.ToLower()} successfully", Severity.Success);
+                await LoadReservations();
+            }
+            else
+            {
+                var errorMessage = response.Message ?? $"Failed to {status.ToLower()} reservation";
+                Console.WriteLine($"Update failed for reservation {reservationId}: {errorMessage}");
+                Snackbar.Add(errorMessage, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating reservation {reservationId}: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Snackbar.Add($"Error updating reservation: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+} 

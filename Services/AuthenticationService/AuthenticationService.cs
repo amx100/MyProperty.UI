@@ -1,6 +1,11 @@
-﻿namespace Services
+﻿using AuthProviders;
+
+namespace Services
 {
-    public class AuthenticationService(IApiService apiService, HttpClient client, ILocalStorageService localStorage) : IAuthenticationService
+    public class AuthenticationService(
+        IApiService apiService, 
+        HttpClient client, 
+        TokenStorage tokenStorage) : IAuthenticationService
     {
         private readonly JsonSerializerOptions _options = new() { PropertyNameCaseInsensitive = true };
 
@@ -9,16 +14,49 @@
             try
             {
                 var response = await apiService.Post($"{ApiEndpoints.AccountController}/login", loginDto);
-                if (!response.IsSuccessStatusCode) return null!;
-                await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                var res = await JsonSerializer.DeserializeAsync<AuthenticationDto>(responseStream, _options,
-                    cancellationToken);
-                return res ?? null!;
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                
+                Console.WriteLine($"Login response: {content}"); // Debug log
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Login failed with status code: {response.StatusCode}");
+                    return new AuthenticationDto 
+                    { 
+                        IsSuccessful = false,
+                        ErrorMessage = $"Login failed: {response.StatusCode}" 
+                    };
+                }
+
+                var result = JsonSerializer.Deserialize<AuthenticationDto>(content, _options);
+                
+                if (result?.IsSuccessful == true)
+                {
+                    // Set the authorization header
+                    client.DefaultRequestHeaders.Authorization = 
+                        new AuthenticationHeaderValue("Bearer", result.AccessToken);
+
+                    // Store tokens using TokenStorage
+                    await tokenStorage.SetTokensAsync(result.AccessToken, result.RefreshToken);
+                    await tokenStorage.SetAccountId(result.AccountId);
+
+                    Console.WriteLine($"Login successful for account: {result.AccountId}");
+                }
+                else
+                {
+                    Console.WriteLine($"Login failed: {result?.ErrorMessage}");
+                }
+
+                return result;
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                return null!;
+                Console.WriteLine($"Exception during login: {ex.Message}");
+                return new AuthenticationDto 
+                { 
+                    IsSuccessful = false,
+                    ErrorMessage = $"Login error: {ex.Message}" 
+                };
             }
         }
 
@@ -26,18 +64,29 @@
         {
             try
             {
-                var response =
-                    await apiService.Post($"{ApiEndpoints.AccountController}/registration", registrationDto);
-                if (!response.IsSuccessStatusCode) return null!;
-                await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                var res = await JsonSerializer.DeserializeAsync<GeneralResponseDto>(responseStream, _options,
-                    cancellationToken);
-                return res ?? null!;
+                var response = await apiService.Post($"{ApiEndpoints.AccountController}/registration", registrationDto);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new GeneralResponseDto 
+                    { 
+                        IsSuccess = false,
+                        Message = $"Registration failed: {response.StatusCode}" 
+                    };
+                }
+
+                return JsonSerializer.Deserialize<GeneralResponseDto>(content, _options) ?? 
+                    new GeneralResponseDto { IsSuccess = true };
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                return null!;
+                Console.WriteLine($"Registration error: {ex.Message}");
+                return new GeneralResponseDto 
+                { 
+                    IsSuccess = false,
+                    Message = $"Registration error: {ex.Message}" 
+                };
             }
         }
     }

@@ -14,18 +14,31 @@
                         <MudTextField Label="Description" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
                                       @bind-Value="PropertyCreate.Description" For="@(() => PropertyCreate.Description)" />
 
-                                           <MudTextField Label="Address" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
+                        <MudTextField Label="Address" Variant="Variant.Outlined" Immediate=true Required RequiredError=@ValidationMessage
                                       @bind-Value="PropertyCreate.Address" For="@(() => PropertyCreate.Address)" />
 
                         <MudNumericField Label="Price" Variant="Variant.Outlined" Immediate=true
                                          @bind-Value="PropertyCreate.Price" For="@(() => PropertyCreate.Price)" />
 
-                        <MudTextField Label="Property Type" Variant="Variant.Outlined" Immediate=true
-                                      @bind-Value="PropertyCreate.PropertyType" For="@(() => PropertyCreate.PropertyType)" />
+                        <MudSelect T="string" 
+                                 Label="Property Type" 
+                                 Variant="Variant.Outlined"
+                                 @bind-Value="PropertyCreate.PropertyType">
+                            @foreach (var type in PropertyTypes)
+                            {
+                                <MudSelectItem Value="@type">@type</MudSelectItem>
+                            }
+                        </MudSelect>
 
-                        <MudTextField Label="Status" Variant="Variant.Outlined" Immediate=true
-                                      @bind-Value="PropertyCreate.Status" For="@(() => PropertyCreate.Status)" />
-
+                        <MudSelect T="string" 
+                                 Label="Status" 
+                                 Variant="Variant.Outlined"
+                                 @bind-Value="PropertyCreate.Status">
+                            @foreach (var status in StatusOptions)
+                            {
+                                <MudSelectItem Value="@status">@status</MudSelectItem>
+                            }
+                        </MudSelect>
 
                         <MudNumericField Label="Size (sqm)/Area" Variant="Variant.Outlined" Immediate=true
                                          @bind-Value="PropertyCreate.Area" For="@(() => PropertyCreate.Area)" />

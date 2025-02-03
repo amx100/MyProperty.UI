@@ -43,22 +43,31 @@ namespace ViewModels
             var dialog = await DialogService!.ShowAsync<PropertyFormComponent>(dialogTitle, parameters, options);
 
             var result = await dialog.Result;
-            if (!result!.Canceled)
+            if (!result.Canceled)
             {
+                Loading = true;
+                StateHasChanged();
+                await LoadProperties();
+                Loading = false;
                 StateHasChanged();
             }
         }
 
-        private async Task LoadProperties()
+        protected async Task LoadProperties()
         {
             try
             {
-                Properties = await PropertyService!.GetAll();
-                StateHasChanged();
+                var properties = await PropertyService!.GetAll();
+                if (properties != null)
+                {
+                    Properties = properties;
+                    StateHasChanged();
+                }
             }
             catch (HttpRequestException ex)
             {
                 Console.WriteLine(ex.Message);
+                Snackbar!.Add("Error loading properties", Severity.Error);
             }
         }
 
@@ -69,19 +78,23 @@ namespace ViewModels
 
             parameters.Add("ContentText", text);
             parameters.Add("ButtonText", "Delete");
-            parameters.Add("Color", Color.Success);
+            parameters.Add("Color", Color.Error);
 
             var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
             var dialog = await DialogService!.ShowAsync<ConfirmComponent>("Delete Property", parameters, options);
             var result = await dialog.Result;
 
-            if (result!.Canceled)
+            if (!result.Canceled)
             {
-                return;
+                Loading = true;
+                StateHasChanged();
+                
+                var response = await PropertyService!.Delete(property.PropertyId);
+                HandleResponse(response, property);
+                
+                Loading = false;
+                StateHasChanged();
             }
-
-            var response = await PropertyService!.Delete(property.PropertyId);
-            HandleResponse(response, property);
         }
 
         protected bool FilterFunc(PropertyDto element)
@@ -130,7 +143,11 @@ namespace ViewModels
             var result = await dialog.Result;
             if (!result.Canceled)
             {
+                Loading = true;
+                StateHasChanged();
                 await LoadProperties();
+                Loading = false;
+                StateHasChanged();
             }
         }
     }

@@ -1,10 +1,12 @@
-﻿namespace ViewModels
+﻿using System.Net.Http.Headers;
+
+namespace ViewModels
 {
     public class AuthenticationViewModel(
         HttpClient client,
         TokenAuthenticationStateProvider authStateProvider,
         ISnackbar snackbar,
-        ILocalStorageService localStorage,
+        TokenStorage tokenStorage,
         NavigationManager navigationManager,
         IAuthenticationService authenticationService) : IAuthenticationViewModel
     {
@@ -18,9 +20,7 @@
 
         public async Task Logout()
         {
-            await localStorage.RemoveItemAsync("accessToken");
-            await localStorage.RemoveItemAsync("accountId");
-            await localStorage.RemoveItemAsync("refreshToken");
+            await tokenStorage.RemoveTokens();
             client.DefaultRequestHeaders.Authorization = null;
             navigationManager.NavigateTo("/", true);
         }
@@ -29,6 +29,35 @@
         {
             get => _changePassword;
             set => _changePassword = value;
+        }
+
+        public async Task<bool> Login(LoginDto loginDto)
+        {
+            try
+            {
+                var result = await authenticationService.Login(loginDto);
+                
+                if (result?.IsSuccessful == true)
+                {
+                    client.DefaultRequestHeaders.Authorization = 
+                        new AuthenticationHeaderValue("Bearer", result.AccessToken);
+                    
+                    authStateProvider.StateChanged();
+                    navigationManager.NavigateTo("/");
+                    return true;
+                }
+                
+                ErrorMessage = result?.ErrorMessage ?? "Login failed";
+                ShowAuthError = true;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Login error: {ex.Message}");
+                ErrorMessage = "An error occurred during login";
+                ShowAuthError = true;
+                return false;
+            }
         }
     }
 }
