@@ -5,22 +5,22 @@
     <MudCard Style="width:90%; max-width: 800px; margin: auto;" Elevation="0">
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Color="@Color.Primary" Typo="Typo.h5"> Register now!​</MudText>
+                <MudText Color="@Color.Primary" Typo="Typo.h5">Register Now!</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
             <MudGrid Spacing="1">
                 <MudItem xs="6">
-                    <MudTextField Label="Firstname" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
+                    <MudTextField Label="First Name" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
                                   @bind-Value="Registration.FirstName" For="@(() => Registration.FirstName)"/>
                 </MudItem>
                 <MudItem xs="6">
-                    <MudTextField Label="Lastname" Class="" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
+                    <MudTextField Label="Last Name" Class="" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
                                   @bind-Value="Registration.LastName" For="@(() => Registration.LastName)"/>
                 </MudItem>
                 <MudItem xs="12">
-                    <MudTextField Label="E-Mail" For="@(() => Registration.Email)" Class="" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
-                                  Validation="@(new EmailAddressAttribute() { ErrorMessage = "Bad email format." })"
+                    <MudTextField Label="Email" For="@(() => Registration.Email)" Class="" Required RequiredError="@ValidationMessage" Variant="Variant.Outlined"
+                                  Validation="@(new EmailAddressAttribute() { ErrorMessage = "Invalid email format." })"
                                   @bind-Value="Registration.Email"/>
                 </MudItem>
                 <MudItem xs="12">
@@ -32,7 +32,7 @@
                                   @bind-Value="Registration.Password" For="@(() => Registration.Password)" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ShowHidePassword" AdornmentAriaLabel="Show Password"/>
                 </MudItem>
                 <MudItem xs="6">
-                    <MudTextField Label="Confirm password" Class="" InputType="@PasswordInput" Variant="Variant.Outlined" Immediate
+                    <MudTextField Label="Confirm Password" Class="" InputType="@PasswordInput" Variant="Variant.Outlined" Immediate
                                   @bind-Value="Registration.ConfirmPassword" For="@(() => Registration.ConfirmPassword)" Adornment="Adornment.End" Input AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ShowHidePassword" AdornmentAriaLabel="Show Password"/>
                 </MudItem>
             </MudGrid>

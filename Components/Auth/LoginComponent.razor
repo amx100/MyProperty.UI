@@ -1,6 +1,6 @@
 ﻿@inherits LoginViewModel
 
- <EditForm Model="Login" OnValidSubmit="ExecuteLogin" style="align-items:center; display:flex; flex-direction:column; margin-top:20px;">
+<EditForm Model="Login" OnValidSubmit="ExecuteLogin" style="align-items:center; display:flex; flex-direction:column; margin-top:20px;">
     <DataAnnotationsValidator/>
     <MudCard Style="width:90%;" Elevation="0">
         <MudCardHeader>
@@ -9,14 +9,14 @@
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
-            <MudTextField Variant="Variant.Outlined" Label="E-Mail" @bind-Value="Login.Email" For="@(() => Login.Email)"/>
-            <MudTextField Variant="Variant.Outlined" Label="Passwort" Class="mt-3"
+            <MudTextField Variant="Variant.Outlined" Label="Email" @bind-Value="Login.Email" For="@(() => Login.Email)"/>
+            <MudTextField Variant="Variant.Outlined" Label="Password" Class="mt-3"
                           @bind-Value="Login.Password" For="@(() => Login.Password)" InputType="@PasswordInput" Adornment="Adornment.End" Input AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ShowHidePassword" AdornmentAriaLabel="Show Password"/>
             @if (ShowAuthError)
             {
-                <MudAlert Class="mt-2" Severity="Severity.Error">Bad credentials</MudAlert>
+                <MudAlert Class="mt-2" Severity="Severity.Error">Invalid credentials</MudAlert>
             }
-            <MudText Style="cursor:pointer" Class="mt-3" @onclick=" OpenForgotPasswordPage" Typo="Typo.body2" Color="Color.Secondary"> Passwort vergessen?</MudText>
+            <MudText Style="cursor:pointer" Class="mt-3" @onclick="OpenForgotPasswordPage" Typo="Typo.body2" Color="Color.Secondary">Forgot password?</MudText>
         </MudCardContent>
         <MudCardActions Style="display:flex; flex-direction:column">
             <MudButton ButtonType="ButtonType.Submit" Class="mb-2" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">Login</MudButton>
