@@ -12,81 +12,449 @@
 @inject ILogger<DashboardComponent> Logger
 @inject TokenStorage tokenStorage
 
-<div class="row g-4">
+<div class="dashboard-container">
     @if (_properties == null)
     {
-        <div class="col-12">
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
+        <div class="skeleton-grid">
+            @for (var i = 0; i < 3; i++)
+            {
+                <div class="property-card shimmer">
+                    <div class="media-loader pulse"></div>
+                    <div class="content-loader">
+                        <div class="line wave"></div>
+                        <div class="line short wave"></div>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     }
     else if (!_properties.Any())
     {
-        <div class="col-12">
-            <div class="alert alert-info">
-                No properties found. Start by adding your first property!
+        <div class="empty-state">
+            <div class="particle-grid">
+                @for (int i = 0; i < 50; i++)
+                {
+                    <div class="particle" style="--delay: @(i * 0.02)"></div>
+                }
             </div>
+            <h3 class="neon-title">Let's Start Building</h3>
+            <p class="subtitle">Add your first property to begin the journey</p>
         </div>
     }
     else
     {
-        @foreach (var property in _properties)
-        {
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
-                    @if (property.Images != null && property.Images.Any())
-                    {
-                        <img src="@property.Images.First().ImageUrl" class="card-img-top" alt="@property.Title" style="height: 200px; object-fit: cover;">
-                    }
-                    else
-                    {
-                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                            <i class="bi bi-house-door fs-1"></i>
-                        </div>
-                    }
-                    <div class="card-body">
-                        <h5 class="card-title">@property.Title</h5>
-                        <p class="card-text text-muted">@property.Address</p>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="badge bg-primary">@property.PropertyType</span>
-                            <strong class="text-success">@property.Price.ToString("C")</strong>
-                        </div>
-                        <div class="row g-2 text-center mb-3">
-                         
-                            <div class="col-4">
-                                <small class="text-muted d-block">Area</small>
-                                <strong>@property.Area m²</strong>
-                            </div>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <a href="/properties/@property.PropertyId" class="btn btn-outline-primary">View Details</a>
-                            @if (property.Status == "Available")
+        <div class="property-grid cinematic-grid">
+            @foreach (var property in _properties)
+            {
+                <div class="property-card" @key="property.PropertyId">
+                    <div class="card-inner hover-transform">
+                        <div class="media-container parallax-layer">
+                            @if (property.Images?.Any() == true)
                             {
-                                <MudButton Color="Color.Primary" 
-                                          Variant="Variant.Filled" 
-                                          OnClick="@(() => CreateReservation(property))"
-                                          Disabled="@(property.Status != "Available")">
-                                  Make Reservation
-                                </MudButton>
+                                <img src="@property.Images.First().ImageUrl"
+                                     class="zoom-blur"
+                                     alt="@property.Title" />
                             }
                             else
                             {
-                                <MudButton Color="Color.Error" 
-                                          Variant="Variant.Filled" 
-                                          Disabled="true">
-                                  @property.Status
-                                </MudButton>
+                                <div class="media-placeholder gradient-animate">
+                                    <i class="bi bi-building"></i>
+                                </div>
                             }
+                            <div class="corner-ribbon @property.Status.ToLower()">
+                                <span>@property.Status</span>
+                            </div>
+                        </div>
+
+                        <div class="card-content">
+                            <div class="property-header">
+                                <h3 class="title-gradient">@property.Title</h3>
+                                <p class="location">
+                                    <i class="bi bi-geo-alt"></i>
+                                    @property.Address
+                                </p>
+                            </div>
+
+                            <div class="data-grid">
+                                <div class="data-item price-bubble">
+                                    
+                                    <span class="value">@property.Price.ToString("C")</span>
+                                    <div class="price-underline"></div>
+                                </div>
+                                <div class="data-item type-frame">
+                                    <span class="value">@property.PropertyType</span>
+                                    <div class="type-border"></div>
+                                </div>
+                                <div class="data-item area-frame">
+                                 
+                                    <span class="value">@property.Area m²</span>
+                                    <div class="area-dots"></div>
+                                </div>
+                            </div>
+
+                            <div class="action-bar">
+                                @if (property.Status?.Equals("Available", StringComparison.OrdinalIgnoreCase) == true)
+                                {
+                                    <MudButton Color="Color.Primary"
+                                               Class="cyber-button"
+                                               OnClick="@(() => CreateReservation(property))">
+                                        <span class="button-content">
+                                            <i class="bi bi-lightning-charge"></i>
+                                            Make Reservation
+                                        </span>
+                                        <div class="button-frame"></div>
+                                        <div class="button-overlay"></div>
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Color="Color.Warning"
+                                               Class="cyber-button-reserved"
+                                               Disabled="true">
+                                        <span class="button-content">
+                                            <i class="bi bi-x-octagon"></i>
+                                            Reserved
+                                        </span>
+                                        <div class="button-frame"></div>
+                                        <div class="button-overlay"></div>
+
+                                    </MudButton>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     }
 </div>
+
+<style scoped>
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @@keyframes gradientFlow {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    @@keyframes borderPulse {
+        0% {
+            opacity: 0.3;
+        }
+
+        50% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0.3;
+        }
+    }
+
+    @@keyframes cyberScan {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    @@keyframes underlineFlow {
+        0% {
+            background-position: -200% 0;
+        }
+
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    .dashboard-container {
+        padding: 3rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .cinematic-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+        gap: 3rem;
+        perspective: 2000px;
+    }
+
+    .property-card {
+        background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+        transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .hover-transform:hover {
+        transform: translateY(-10px) rotateX(5deg) rotateY(1deg);
+    }
+
+    .media-container {
+        height: 300px;
+        position: relative;
+        overflow: hidden;
+        clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+    }
+
+    .zoom-blur {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+        .zoom-blur:hover {
+            transform: scale(1.1);
+            filter: blur(2px);
+        }
+
+    .corner-ribbon {
+        position: absolute;
+        top: 20px;
+        right: -50px;
+        width: 200px;
+        padding: 8px;
+        text-align: center;
+        transform: rotate(45deg);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        opacity: 0.95;
+    }
+
+        .corner-ribbon.available {
+            background: linear-gradient(45deg, #00c853, #64dd17);
+            color: #000;
+        }
+          .corner-ribbon.reserved {
+            background: linear-gradient(45deg,rgb(200, 0, 77),rgb(145, 5, 75));
+            color: #000;
+        }
+
+
+    .card-content {
+        display: flex;
+        flex-direction: column;
+        padding: 2rem;
+        background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
+    }
+
+    .action-bar {
+        margin-top: auto; /* Gura dugmad na dno */
+    }
+    .title-gradient {
+        background: linear-gradient(45deg, #fff, #00ff88);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        margin-bottom: 0.5rem;
+    }
+
+    .location {
+        color: #e0e0e0;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .data-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .data-item {
+        position: relative;
+        padding: 0.25rem;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        transition: transform 0.3s ease;
+        color: white;
+        text-align: center;
+    }
+
+
+
+        .data-item:hover {
+            transform: translateY(-3px);
+        }
+
+    .price-bubble::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border: 2px solid rgba(0, 255, 136, 0.3);
+        border-radius: 12px;
+        animation: borderPulse 2s infinite;
+    }
+
+    .price-underline {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #00ff88, transparent);
+        animation: underlineFlow 3s infinite;
+    }
+
+    .type-frame {
+        text-align: center;
+        border: 2px solid rgba(0, 184, 216, 0.3) !important;
+    }
+
+    .area-frame {
+        text-align: center;
+        border: 2px solid rgba(238, 238, 238, 0.6) !important;
+    }
+
+    .area-dots {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 10%, transparent 20%);
+        background-size: 10px 10px;
+
+    }
+
+    .cyber-button {
+        position: relative;
+        width: 100%;
+        padding: 1.2rem;
+        border: 2px solid #00ff88 !important;
+        background: linear-gradient(45deg, #00ff88, #00b4d8);
+        clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+        .cyber-button:hover {
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+            filter: hue-rotate(45deg);
+        }
+
+          .cyber-button-reserved {
+            color: white;
+        position: relative;
+        width: 100%;
+        padding: 1.2rem;
+        border: 2px solidrgb(255, 0, 76) !important;
+        background: linear-gradient(45deg,rgb(190, 3, 44),rgb(51, 26, 33));
+        clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+        .cyber-button-reserved:hover {
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+            filter: hue-rotate(45deg);
+        }
+
+    .button-frame {
+        position: absolute;
+        inset: -3px;
+        border: 2px solid #00b4d8;
+        filter: blur(2px);
+        opacity: 0.7;
+        transition: all 0.3s ease;
+    }
+
+    .button-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.1) 50%, transparent 75%);
+        animation: cyberScan 3s infinite linear;
+    }
+
+    .status-chip {
+        border: 2px solid rgba(255, 75, 75, 0.3);
+        padding: 0.8rem 1.5rem;
+        position: relative;
+        width: 100%;
+        text-align: center;
+        border-radius: 8px;
+        color: white;
+    }
+
+    .status-border {
+        position: absolute;
+        inset: 0;
+        border: 1px solid rgba(255, 75, 75, 0.1);
+        margin: 2px;
+        border-radius: 6px;
+        color: white;
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background: #ff4b4b;
+        border-radius: 50%;
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        animation: borderPulse 1.5s infinite;
+    }
+
+    .button-content{
+        color:white;
+    }
+
+    @@media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .cinematic-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .property-card {
+            margin: 0 0.5rem;
+        }
+
+        .title-gradient {
+            font-size: 1.6rem;
+        }
+    }
+</style>
 
 @code {
     private ObservableCollection<PropertyDto> _properties;
@@ -98,27 +466,14 @@
         {
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
-            
-            Console.WriteLine($"Is authenticated: {user.Identity?.IsAuthenticated}");
-            Console.WriteLine("All claims:");
-            foreach (var claim in user.Claims)
-            {
-                Console.WriteLine($"Type: {claim.Type}, Value: {claim.Value}");
-            }
 
             if (user.Identity?.IsAuthenticated == true)
             {
-                _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? 
-                               user.FindFirst("sub")?.Value ??
-                               user.FindFirst("nameid")?.Value ??
-                               user.FindFirst("userId")?.Value ??
-                               user.FindFirst("Id")?.Value;
-
-                Console.WriteLine($"Current user ID: {_currentUserId}");
-            }
-            else
-            {
-                Console.WriteLine("User is not authenticated");
+                _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                                 user.FindFirst("sub")?.Value ??
+                                 user.FindFirst("nameid")?.Value ??
+                                 user.FindFirst("userId")?.Value ??
+                                 user.FindFirst("Id")?.Value;
             }
 
             Logger.LogInformation("Starting to load properties...");
@@ -127,24 +482,25 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
+            Logger.LogError(ex, "Error in OnInitializedAsync");
             _properties = new ObservableCollection<PropertyDto>();
         }
     }
 
+    // Metoda CreateReservation preuzeta iz koda 1 s dodatnim logiranjem
     private async Task CreateReservation(PropertyDto property)
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        
+
         if (!user.Identity?.IsAuthenticated ?? true)
         {
             Snackbar.Add("Please login to make a reservation", Severity.Warning);
             return;
         }
 
+        // Pokušaj dohvaćanja userId-a iz tvrdnji
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
         if (string.IsNullOrEmpty(userId))
         {
             userId = await tokenStorage.GetAccountId();
@@ -165,20 +521,20 @@
         Console.WriteLine($"Creating reservation with UserId: {userId}, PropertyId: {property.PropertyId}");
 
         var parameters = new DialogParameters
-        {
-            ["PropertyId"] = property.PropertyId,
-            ["AccountId"] = userId,
-            ["PropertyTitle"] = property.Title,
-            ["StartDate"] = DateTime.Today,
-            ["EndDate"] = DateTime.Today.AddDays(7)
-        };
+            {
+                ["PropertyId"] = property.PropertyId,
+                ["AccountId"] = userId,
+                ["PropertyTitle"] = property.Title,
+                ["StartDate"] = DateTime.Today,
+                ["EndDate"] = DateTime.Today.AddDays(7)
+            };
 
         var options = new DialogOptions
-        {
-            CloseButton = true,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true
-        };
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            };
 
         var dialog = await DialogService.ShowAsync<ReservationFormDialog>("Make Reservation", parameters, options);
         var result = await dialog.Result;

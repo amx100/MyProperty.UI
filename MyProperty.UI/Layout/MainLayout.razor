@@ -11,8 +11,7 @@
     <Authorized>
         <MudLayout>
             <MudAppBar Elevation="1">
-                <MudIconButton Icon="@Icons.Material.Filled.Menu" style="color: white;" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
-                <MudImage Width="50" Src="images/birgit-logo.png"></MudImage>
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" style="color: white;" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>   
             </MudAppBar>
             <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
                 <NavMenu/>
