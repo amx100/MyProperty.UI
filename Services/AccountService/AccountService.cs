@@ -1,8 +1,21 @@
-﻿namespace Services
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Contract;
+
+namespace Services
 {
-    public class AccountService(IApiService apiService) : IAccountService
+    public class AccountService : IAccountService
     {
+        private readonly IApiService apiService;
         private readonly JsonSerializerOptions _options = new() { PropertyNameCaseInsensitive = true };
+
+        public AccountService(IApiService apiService)
+        {
+            this.apiService = apiService;
+        }
 
         public async Task<GeneralResponseDto> Delete(string accountId)
         {

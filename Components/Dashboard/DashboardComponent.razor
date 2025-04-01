@@ -1,4 +1,5 @@
-﻿@using Components.Reservations
+﻿```csharp
+@using Components.Reservations
 @using Contract
 @using System.Collections.ObjectModel
 @using Microsoft.Extensions.Logging
@@ -61,8 +62,8 @@
                                     <i class="bi bi-building"></i>
                                 </div>
                             }
-                            <div class="corner-ribbon @property.Status.ToLower()">
-                                <span>@property.Status</span>
+                            <div class="corner-ribbon @GetPropertyStatus(property).ToLower()">
+                                <span>@GetPropertyStatus(property)</span>
                             </div>
                         </div>
 
@@ -77,7 +78,7 @@
 
                             <div class="data-grid">
                                 <div class="data-item price-bubble">
-                                    
+
                                     <span class="value">@property.Price.ToString("C") /night</span>
                                     <div class="price-underline"></div>
                                 </div>
@@ -86,14 +87,14 @@
                                     <div class="type-border"></div>
                                 </div>
                                 <div class="data-item area-frame">
-                                 
+
                                     <span class="value">@property.Area m²</span>
                                     <div class="area-dots"></div>
                                 </div>
                             </div>
 
                             <div class="action-bar">
-                                @if (property.Status?.Equals("Available", StringComparison.OrdinalIgnoreCase) == true)
+                                @if (IsPropertyAvailable(property))
                                 {
                                     <MudButton Color="Color.Primary"
                                                Class="cyber-button"
@@ -130,6 +131,7 @@
 </div>
 
 <style scoped>
+    /* CSS styles remain unchanged */
     @@keyframes float {
         0%, 100% {
             transform: translateY(0);
@@ -252,8 +254,9 @@
             background: linear-gradient(45deg, #00c853, #64dd17);
             color: #000;
         }
-          .corner-ribbon.reserved {
-            background: linear-gradient(45deg,rgb(200, 0, 77),rgb(145, 5, 75));
+
+        .corner-ribbon.reserved {
+            background: linear-gradient(45deg, rgb(200, 0, 77), rgb(145, 5, 75));
             color: #000;
         }
 
@@ -268,6 +271,7 @@
     .action-bar {
         margin-top: auto; /* Gura dugmad na dno */
     }
+
     .title-gradient {
         background: linear-gradient(45deg, #fff, #00ff88);
         -webkit-background-clip: text;
@@ -306,7 +310,6 @@
         color: white;
         text-align: center;
     }
-
 
 
         .data-item:hover {
@@ -366,16 +369,16 @@
             filter: hue-rotate(45deg);
         }
 
-          .cyber-button-reserved {
+        .cyber-button-reserved {
             color: white;
-        position: relative;
-        width: 100%;
-        padding: 1.2rem;
-        border: 2px solidrgb(255, 0, 76) !important;
-        background: linear-gradient(45deg,rgb(190, 3, 44),rgb(51, 26, 33));
-        clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+            position: relative;
+            width: 100%;
+            padding: 1.2rem;
+            border: 2px solid rgb(255, 0, 76) !important;
+            background: linear-gradient(45deg, rgb(190, 3, 44), rgb(51, 26, 33));
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
         .cyber-button-reserved:hover {
             clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
@@ -432,8 +435,8 @@
         animation: borderPulse 1.5s infinite;
     }
 
-    .button-content{
-        color:white;
+    .button-content {
+        color: white;
     }
 
     @@media (max-width: 768px) {
@@ -459,8 +462,10 @@
 @code {
     private ObservableCollection<PropertyDto> _properties;
     private string? _currentUserId;
+    private Dictionary<int, bool> _propertyReservationStatus = new Dictionary<int, bool>();
+    private List<ReservationDto> _allReservations = new(); // Store all reservations
 
-    protected override async Task OnInitializedAsync()
+   protected override async Task OnInitializedAsync()
     {
         try
         {
@@ -470,21 +475,96 @@
             if (user.Identity?.IsAuthenticated == true)
             {
                 _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                                 user.FindFirst("sub")?.Value ??
-                                 user.FindFirst("nameid")?.Value ??
-                                 user.FindFirst("userId")?.Value ??
-                                 user.FindFirst("Id")?.Value;
+                                   user.FindFirst("sub")?.Value ??
+                                   user.FindFirst("nameid")?.Value ??
+                                   user.FindFirst("userId")?.Value ??
+                                   user.FindFirst("Id")?.Value;
             }
 
             Logger.LogInformation("Starting to load properties...");
             _properties = await PropertyService.GetAll();
             Logger.LogInformation($"Loaded {_properties?.Count ?? 0} properties");
+
+            Logger.LogInformation("Starting to load all reservations...");
+            var reservationsCollection = await ReservationService.GetAll();
+            _allReservations = reservationsCollection.ToList(); // Explicitly convert to List
+            Logger.LogInformation($"Loaded {_allReservations?.Count ?? 0} reservations");
+
+            // Check and update reservation status for all properties
+            await UpdateReservationStatuses();
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in OnInitializedAsync");
             _properties = new ObservableCollection<PropertyDto>();
+            _allReservations = new List<ReservationDto>();
         }
+    }
+
+    private async Task RefreshProperties()
+    {
+        try
+        {
+            _properties = await PropertyService.GetAll();
+            // Important: Update the reservation statuses whenever properties are refreshed
+            var reservationsCollection = await ReservationService.GetAll(); // Reload all reservations
+            _allReservations = reservationsCollection.ToList(); // Explicitly convert to List
+            await UpdateReservationStatuses();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error refreshing properties");
+        }
+    }
+
+    private async Task UpdateReservationStatuses()
+    {
+        try
+        {
+            _propertyReservationStatus.Clear();
+
+            foreach (var property in _properties)
+            {
+                // Check if there are any active reservations for this property
+                bool hasActiveReservation = _allReservations.Any(r =>
+                    r.PropertyId == property.PropertyId &&
+                    (r.Status?.Equals("Pending", StringComparison.OrdinalIgnoreCase) == true ||
+                     r.Status?.Equals("Confirmed", StringComparison.OrdinalIgnoreCase) == true));
+
+                _propertyReservationStatus[property.PropertyId] = hasActiveReservation;
+            }
+
+            Logger.LogInformation($"Updated reservation statuses for {_propertyReservationStatus.Count} properties");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error updating reservation statuses");
+        }
+    }
+
+    private bool IsPropertyAvailable(PropertyDto property)
+    {
+        // Check our dictionary first for the real-time status
+        if (_propertyReservationStatus.TryGetValue(property.PropertyId, out bool isReserved))
+        {
+            return !isReserved;
+        }
+
+        // Fall back to the property's Status field if we don't have reservation info
+        return property.Status?.Equals("Available", StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private string GetPropertyStatus(PropertyDto property)
+    {
+        // Check our dictionary first for the real-time status
+        if (_propertyReservationStatus.TryGetValue(property.PropertyId, out bool isReserved))
+        {
+            return isReserved ? "Reserved" : "Available";
+        }
+
+        // Fall back to the property's Status field if we don't have reservation info
+        return property.Status ?? "Available";
     }
 
     private async Task CreateReservation(PropertyDto property)
@@ -543,17 +623,5 @@
             await RefreshProperties();
         }
     }
-
-    private async Task RefreshProperties()
-    {
-        try
-        {
-            _properties = await PropertyService.GetAll();
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error refreshing properties");
-        }
-    }
 }
+```
