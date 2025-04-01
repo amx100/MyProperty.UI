@@ -4,6 +4,7 @@
 @using System.Security.Claims
 @inject IReservationService ReservationService
 @inject IAccountService AccountService
+@inject IPropertyService PropertyService
 @inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject TokenStorage TokenStorage
@@ -17,6 +18,7 @@
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Property ID</MudTh>
+                <MudTh>Property Name</MudTh>
                 <MudTh>User ID</MudTh>
                 <MudTh>User Data</MudTh>
                 <MudTh>Start Date</MudTh>
@@ -26,6 +28,7 @@
             </HeaderContent>
             <RowTemplate Context="reservation">
                 <MudTd>@reservation.PropertyId</MudTd>
+                <MudTd>@reservation.PropertyTitle</MudTd>
                 <MudTd>@reservation.AccountId</MudTd>
                 <MudTd>
                     @if (_accountDetails.ContainsKey(reservation.AccountId))
@@ -100,6 +103,7 @@
     private string _currentUserId;
     private string _userRole;
     private Dictionary<string, AccountDto> _accountDetails = new();
+    private Dictionary<int, PropertyDto> _propertyDetails = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -147,21 +151,17 @@
             Console.WriteLine($"Loaded {reservations.Count} reservations");
             Console.WriteLine($"Current user ID: {_currentUserId}, Role: {_userRole}");
 
-            // Filtriranje rezervacija prema ulozi
             if (_userRole == "Admin")
             {
-                // Admin vidi sve rezervacije
                 Reservations = reservations.ToList();
                 Console.WriteLine("Admin view: showing all reservations");
             }
             else
             {
-                // Korisnik vidi samo svoje rezervacije
                 Reservations = reservations.Where(r => r.AccountId == _currentUserId).ToList();
                 Console.WriteLine($"User view: showing {Reservations.Count} reservations for user {_currentUserId}");
             }
 
-            // Load account details for all reservations
             await LoadAccountDetails();
         }
         catch (Exception ex)
