@@ -6,13 +6,13 @@
 <MudDialog>
     <DialogContent>
         <MudContainer Style="max-width: 500px">
-            @if (string.IsNullOrEmpty(PropertyTitle) || PropertyId == 0 || string.IsNullOrEmpty(AccountId))
+            @if (PropertyId == 0 || string.IsNullOrEmpty(AccountId))
             {
                 <MudAlert Severity="Severity.Error">Invalid reservation parameters</MudAlert>
             }
             else
             {
-                <MudText Typo="Typo.h6" Class="mb-4">Reserve @PropertyTitle</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4">Make Reservation</MudText>
                 
                 <MudDateRangePicker @bind-DateRange="_dateRange" 
                                    Label="Reservation Period"
@@ -31,7 +31,7 @@
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton Color="Color.Primary" 
                   OnClick="Submit" 
-                  Disabled="@(string.IsNullOrEmpty(PropertyTitle) || PropertyId == 0 || string.IsNullOrEmpty(AccountId) || _dateRange.Start == null || _dateRange.End == null)">
+                  Disabled="@(PropertyId == 0 || string.IsNullOrEmpty(AccountId) || _dateRange.Start == null || _dateRange.End == null)">
             Submit Reservation
         </MudButton>
     </DialogActions>
@@ -42,7 +42,6 @@
     
     [Parameter] public int PropertyId { get; set; }
     [Parameter] public string AccountId { get; set; }
-    [Parameter] public string PropertyTitle { get; set; }
     [Parameter] public DateTime? StartDate { get; set; }
     [Parameter] public DateTime? EndDate { get; set; }
 
@@ -51,10 +50,10 @@
 
     protected override void OnInitialized()
     {
-        if (string.IsNullOrEmpty(AccountId) || PropertyId == 0 || string.IsNullOrEmpty(PropertyTitle))
+        if (string.IsNullOrEmpty(AccountId) || PropertyId == 0)
         {
             _errorMessage = "Invalid reservation parameters. Please try again.";
-            Console.WriteLine($"Invalid parameters - AccountId: {AccountId}, PropertyId: {PropertyId}, Title: {PropertyTitle}");
+            Console.WriteLine($"Invalid parameters - AccountId: {AccountId}, PropertyId: {PropertyId}");
         }
         
         // Initialize date range with passed parameters or default values

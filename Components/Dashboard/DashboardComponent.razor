@@ -487,7 +487,6 @@
         }
     }
 
-    // Metoda CreateReservation preuzeta iz koda 1 s dodatnim logiranjem
     private async Task CreateReservation(PropertyDto property)
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -512,7 +511,7 @@
             return;
         }
 
-        if (property?.PropertyId == 0 || string.IsNullOrEmpty(property?.Title))
+        if (property?.PropertyId == 0)
         {
             Snackbar.Add("Invalid property information", Severity.Error);
             return;

@@ -1,7 +1,9 @@
 @using Contract
 @using Services.ReservationService
+@using Services
 @using System.Security.Claims
 @inject IReservationService ReservationService
+@inject IAccountService AccountService
 @inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject TokenStorage TokenStorage
@@ -14,8 +16,9 @@
                 <MudSpacer />
             </ToolBarContent>
             <HeaderContent>
-                <MudTh>Property</MudTh>
-                <MudTh>User</MudTh>
+                <MudTh>Property ID</MudTh>
+                <MudTh>User ID</MudTh>
+                <MudTh>User Data</MudTh>
                 <MudTh>Start Date</MudTh>
                 <MudTh>End Date</MudTh>
                 <MudTh>Status</MudTh>
@@ -24,6 +27,17 @@
             <RowTemplate Context="reservation">
                 <MudTd>@reservation.PropertyId</MudTd>
                 <MudTd>@reservation.AccountId</MudTd>
+                <MudTd>
+                    @if (_accountDetails.ContainsKey(reservation.AccountId))
+                    {
+                        var account = _accountDetails[reservation.AccountId];
+                        @($"{account.FirstName} {account.LastName}")
+                    }
+                    else
+                    {
+                        @reservation.AccountId
+                    }
+                </MudTd>
                 <MudTd>@(reservation.StartDate.Year > 1 ? reservation.StartDate.ToString("dd.MM.yyyy") : "-")</MudTd>
                 <MudTd>@(reservation.EndDate.Year > 1 ? reservation.EndDate.ToString("dd.MM.yyyy") : "-")</MudTd>
                 <MudTd>
@@ -38,18 +52,12 @@
                             <Authorized>
                                 <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined">
                                     <MudButton Color="Color.Success"
-                                              OnClick="@(async () => {
-                                                  Console.WriteLine($"Approving reservation {reservation.Id}");
-                                                  await UpdateReservationStatus(reservation.Id, "Confirmed");
-                                              })">
+                                              OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Confirmed"))">
                                         <MudIcon Icon="@Icons.Material.Filled.Check" Class="mr-2"/>
                                         Approve
                                     </MudButton>
                                     <MudButton Color="Color.Error"
-                                              OnClick="@(async () => {
-                                                  Console.WriteLine($"Declining reservation {reservation.Id}");
-                                                  await UpdateReservationStatus(reservation.Id, "Declined");
-                                              })">
+                                              OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Declined"))">
                                         <MudIcon Icon="@Icons.Material.Filled.Close" Class="mr-2"/>
                                         Decline
                                     </MudButton>
@@ -64,10 +72,7 @@
                                 <MudButton Color="Color.Error"
                                           Size="Size.Small"
                                           Variant="Variant.Outlined"
-                                          OnClick="@(async () => {
-                                              Console.WriteLine($"Cancelling reservation {reservation.Id}");
-                                              await UpdateReservationStatus(reservation.Id, "Declined");
-                                          })">
+                                          OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Declined"))">
                                     <MudIcon Icon="@Icons.Material.Filled.Close" Class="mr-2"/>
                                     Cancel Reservation
                                 </MudButton>
@@ -94,6 +99,7 @@
     private List<ReservationDto> Reservations { get; set; } = new();
     private string _currentUserId;
     private string _userRole;
+    private Dictionary<string, AccountDto> _accountDetails = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,6 +160,9 @@
                 Reservations = reservations.Where(r => r.AccountId == _currentUserId).ToList();
                 Console.WriteLine($"User view: showing {Reservations.Count} reservations for user {_currentUserId}");
             }
+
+            // Load account details for all reservations
+            await LoadAccountDetails();
         }
         catch (Exception ex)
         {
@@ -166,6 +175,30 @@
         {
             _loading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task LoadAccountDetails()
+    {
+        try
+        {
+            var uniqueAccountIds = Reservations.Select(r => r.AccountId).Distinct();
+            foreach (var accountId in uniqueAccountIds)
+            {
+                if (!_accountDetails.ContainsKey(accountId))
+                {
+                    var account = await AccountService.GetAccountById(accountId);
+                    if (account != null)
+                    {
+                        _accountDetails[accountId] = account;
+                    }
+                }
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading account details: {ex.Message}");
         }
     }
 
