@@ -13,6 +13,90 @@
 @inject TokenStorage tokenStorage
 
 <div class="dashboard-container">
+ <div class="filters-container">
+    <div class="filters-header">
+        <div class="filters-title">
+            <i class="bi bi-funnel filter-icon"></i>
+            <h2 class="filter-title">Pronađi savršenu nekretninu</h2>
+        </div>
+        <button class="clear-filters-btn" @onclick="ClearFilters">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            Očisti filtere
+        </button>
+    </div>
+    
+    <div class="filters-body">
+        <div class="search-container">
+            <div class="search-field">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" 
+                       placeholder="Pretraži po naslovu ili adresi..." 
+                       @bind="SearchPropertyName" 
+                       @bind:event="oninput"
+                       class="search-input" />
+                @if (!string.IsNullOrEmpty(SearchPropertyName))
+                {
+                    <button class="clear-input" @onclick="@(() => SearchPropertyName = null)">
+                        <i class="bi bi-x"></i>
+                    </button>
+                }
+            </div>
+        </div>
+                     
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label class="filter-label">Tip nekretnine</label>
+                <div class="select-container">
+                    <i class="bi bi-house-door select-icon"></i>
+                    <select class="filter-select" @bind="SelectedPropertyType">
+                        <option value="">Svi tipovi</option>
+                        @foreach (var type in PropertyTypes)
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <div class="select-container">
+                    <i class="bi bi-bookmark select-icon"></i>
+                    <select class="filter-select" @bind="SelectedStatus">
+                        <option value="">Svi statusi</option>
+                        @foreach (var status in StatusOptions)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-group area-filter">
+                <label class="area-label">Površina (m²)</label>
+                <div class="area-inputs">
+                    <div class="input-container">
+                        <input type="number" 
+                               class="area-input" 
+                               placeholder="Min"
+                               @bind="MinArea"
+                               @bind:event="oninput" />
+                    </div>
+                    <div class="area-divider"></div>
+                    <div class="input-container">
+                        <input type="number" 
+                               class="area-input" 
+                               placeholder="Max"
+                               @bind="MaxArea"
+                               @bind:event="oninput" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
     @if (_properties == null)
     {
         <div class="loading-grid">
@@ -41,7 +125,7 @@
     else
     {
         <div class="property-grid">
-            @foreach (var property in _properties)
+            @foreach (var property in _properties.Where(FilterFunc))
             {
                 <div class="property-card" @key="property.PropertyId">
                     <div class="card-media">
@@ -452,13 +536,231 @@
             grid-column: span 2;
         }
     }
-</style>
 
+    /* Filter Container Styles */
+    .filters-container {
+        background-color: var(--surface-color);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .filters-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .filter-icon {
+        color: var(--primary-color);
+        font-size: 1.5rem;
+    }
+
+    .filter-title {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .clear-filters-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        background: none;
+        color: var(--primary-color);
+        font-weight: 500;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .clear-filters-btn:hover {
+        background-color: rgba(104, 129, 172, 0.08);
+    }
+
+    .filters-body {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Search Container Styles */
+    .search-container {
+        width: 100%;
+    }
+
+    .search-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+    }
+
+    .search-field:focus-within {
+        border-color: var(--primary-color);
+    }
+
+    .search-icon {
+        color: var(--primary-color);
+        font-size: 1.25rem;
+        padding: 0 1rem;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: none;
+        background: none;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        outline: none;
+    }
+
+    .clear-input {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        padding: 0.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .clear-input:hover {
+        color: var(--text-primary);
+    }
+
+    /* Filters Grid Styles */
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .select-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+    }
+
+    .select-container:focus-within {
+        border-color: var(--primary-color);
+    }
+
+    .select-icon {
+        color: var(--primary-color);
+        font-size: 1.25rem;
+        padding: 0 1rem;
+    }
+
+    .filter-select {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: none;
+        background: none;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        outline: none;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    /* Area Filter Styles */
+    .area-filter {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .area-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .area-inputs {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .input-container {
+        flex: 1;
+        position: relative;
+    }
+
+    .area-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--background-color);
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        outline: none;
+        transition: all 0.2s ease;
+    }
+
+    .area-input:focus {
+        border-color: var(--primary-color);
+    }
+
+    .area-divider {
+        height: 1px;
+        width: 16px;
+        background-color: var(--border-color);
+    }
+
+   
+}
+
+</style>
 @code {
     private ObservableCollection<PropertyDto> _properties;
     private string? _currentUserId;
     private Dictionary<int, bool> _propertyReservationStatus = new Dictionary<int, bool>();
     private List<ReservationDto> _allReservations = new(); // Store all reservations
+    private string? SearchPropertyName { get; set; }
+    private string? SelectedPropertyType { get; set; }
+    private string? SelectedStatus { get; set; }
+    private double? MinArea { get; set; }
+    private double? MaxArea { get; set; }
+
+    private IEnumerable<string> PropertyTypes { get; set; } = new List<string> { "House", "Apartment", "Office" };
+    private IEnumerable<string> StatusOptions { get; set; } = new List<string> { "Available", "Reserved" };
 
     protected override async Task OnInitializedAsync()
     {
@@ -660,5 +962,49 @@ private void LogPropertyStatus(PropertyDto property)
         {
             await RefreshProperties();
         }
+    }
+
+    private bool FilterFunc(PropertyDto property)
+    {
+        if (string.IsNullOrWhiteSpace(SearchPropertyName) &&
+            string.IsNullOrWhiteSpace(SelectedPropertyType) &&
+            string.IsNullOrWhiteSpace(SelectedStatus) &&
+            !MinArea.HasValue &&
+            !MaxArea.HasValue)
+        {
+            return true;
+        }
+
+        bool matchesSearch = string.IsNullOrWhiteSpace(SearchPropertyName) ||
+                           property.Title!.Contains(SearchPropertyName, StringComparison.OrdinalIgnoreCase) ||
+                           property.Address!.Contains(SearchPropertyName, StringComparison.OrdinalIgnoreCase);
+
+        bool matchesType = string.IsNullOrWhiteSpace(SelectedPropertyType) ||
+                         property.PropertyType == SelectedPropertyType;
+
+        bool matchesStatus = string.IsNullOrWhiteSpace(SelectedStatus) ||
+                           property.Status == SelectedStatus;
+
+        bool matchesArea = true;
+        if (MinArea.HasValue && property.Area < MinArea.Value)
+        {
+            matchesArea = false;
+        }
+        if (MaxArea.HasValue && property.Area > MaxArea.Value)
+        {
+            matchesArea = false;
+        }
+
+        return matchesSearch && matchesType && matchesStatus && matchesArea;
+    }
+
+    private void ClearFilters()
+    {
+        SearchPropertyName = null;
+        SelectedPropertyType = null;
+        SelectedStatus = null;
+        MinArea = null;
+        MaxArea = null;
+        StateHasChanged();
     }
 }
