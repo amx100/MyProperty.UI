@@ -1,5 +1,5 @@
 ﻿using Components.Dialog;
-using Components.MyProperties;
+using Components.PropertyImages;
 using Contract;
 using System.Collections.ObjectModel;
 
