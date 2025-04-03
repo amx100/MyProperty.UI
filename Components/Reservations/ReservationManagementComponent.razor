@@ -9,93 +9,223 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject TokenStorage TokenStorage
 
-<AuthorizeView Context="authContext">
-    <Authorized>
-        <MudTable Items="@Reservations" Dense="true" Hover="true" Loading="@_loading">
-            <ToolBarContent>
-                <MudText Typo="Typo.h6">Reservations Management</MudText>
-                <MudSpacer />
-            </ToolBarContent>
-            <HeaderContent>
-                <MudTh>Property ID</MudTh>
-                <MudTh>Property Name</MudTh>
-                <MudTh>User ID</MudTh>
-                <MudTh>User Data</MudTh>
-                <MudTh>Start Date</MudTh>
-                <MudTh>End Date</MudTh>
-                <MudTh>Status</MudTh>
-                <MudTh>Actions</MudTh>
-            </HeaderContent>
-            <RowTemplate Context="reservation">
-                <MudTd>@reservation.PropertyId</MudTd>
-                <MudTd>@reservation.PropertyTitle</MudTd>
-                <MudTd>@reservation.AccountId</MudTd>
-                <MudTd>
-                    @if (_accountDetails.ContainsKey(reservation.AccountId))
-                    {
-                        var account = _accountDetails[reservation.AccountId];
-                        @($"{account.FirstName} {account.LastName}")
-                    }
-                    else
-                    {
-                        @reservation.AccountId
-                    }
-                </MudTd>
-                <MudTd>@(reservation.StartDate.Year > 1 ? reservation.StartDate.ToString("dd.MM.yyyy") : "-")</MudTd>
-                <MudTd>@(reservation.EndDate.Year > 1 ? reservation.EndDate.ToString("dd.MM.yyyy") : "-")</MudTd>
-                <MudTd>
-                    <MudChip T="string" Color="@GetStatusColor(reservation.Status)" Size="Size.Small">
-                        @reservation.Status
-                    </MudChip>
-                </MudTd>
-                <MudTd>
-                    @if (reservation.Status == "Pending")
-                    {
-                        <AuthorizeView Roles="Admin" Context="adminContext">
-                            <Authorized>
-                                <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined">
-                                    <MudButton Color="Color.Success"
-                                              OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Confirmed"))">
-                                        <MudIcon Icon="@Icons.Material.Filled.Check" Class="mr-2"/>
-                                        Approve
-                                    </MudButton>
-                                    <MudButton Color="Color.Error"
-                                              OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Declined"))">
-                                        <MudIcon Icon="@Icons.Material.Filled.Close" Class="mr-2"/>
-                                        Decline
-                                    </MudButton>
-                                </MudButtonGroup>
-                            </Authorized>
-                        </AuthorizeView>
-                    }
-                    else if (reservation.Status == "Confirmed")
-                    {
-                        <AuthorizeView Roles="Admin" Context="adminContext">
-                            <Authorized>
-                                <MudButton Color="Color.Error"
-                                          Size="Size.Small"
-                                          Variant="Variant.Outlined"
-                                          OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Declined"))">
-                                    <MudIcon Icon="@Icons.Material.Filled.Close" Class="mr-2"/>
-                                    Cancel Reservation
-                                </MudButton>
-                            </Authorized>
-                        </AuthorizeView>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Color="@GetStatusColor(reservation.Status)" Size="Size.Small">
-                            @reservation.Status
-                        </MudChip>
-                    }
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
-    </Authorized>
-    <NotAuthorized>
-        <MudAlert Severity="Severity.Warning">Please login to view reservations.</MudAlert>
-    </NotAuthorized>
-</AuthorizeView>
+<style>
+    .custom-table {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .status-badge {
+        border-radius: 12px;
+        padding: 4px 12px;
+        font-weight: 500;
+    }
+    
+    .card-header {
+        background-color: #CDD2D8;
+        border-bottom: 2px solid #6C85B0;
+    }
+    
+    .action-button {
+        border-radius: 8px;
+        text-transform: none;
+        font-weight: 500;
+    }
+    
+    .page-title {
+        color: #1C2338;
+        font-weight: 600;
+    }
+    
+    .mud-table-container {
+        background-color: #FFFFFF;
+    }
+    
+    .mud-table-head {
+        background-color: #F5F7FA;
+    }
+    
+    .mud-table-cell {
+        color: #1C2338;
+    }
+</style>
+
+<MudCard Class="custom-table mt-4">
+    <AuthorizeView Context="authContext">
+        <Authorized>
+            <MudCardHeader Class="card-header">
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h5" Class="page-title">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Medium" Class="mr-2" />
+                        Upravljanje rezervacijama
+                    </MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton 
+                        Variant="Variant.Filled" 
+                        Color="Color.Primary" 
+                        StartIcon="@Icons.Material.Filled.Refresh" 
+                        OnClick="@LoadReservations"
+                        Disabled="@_loading"
+                        Style="background-color: #6A7382;">
+                        Osvježi
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            
+            <MudCardContent Class="pa-0">
+                <MudTable Items="@Reservations" 
+                          Dense="false" 
+                          Hover="true" 
+                          Loading="@_loading"
+                          LoadingProgressColor="Color.Primary"
+                          Elevation="0"
+                          Style="background-color: #FFFFFF;"
+                          CustomFooter="true">
+                    <HeaderContent>
+                        <MudTh Style="color: #6A7382; font-weight: 600;">Objekt</MudTh>
+                        <MudTh Style="color: #6A7382; font-weight: 600;">Korisnik</MudTh>
+                        <MudTh Style="color: #6A7382; font-weight: 600;">Datum dolaska</MudTh>
+                        <MudTh Style="color: #6A7382; font-weight: 600;">Datum odlaska</MudTh>
+                        <MudTh Style="color: #6A7382; font-weight: 600;">Status</MudTh>
+                        <MudTh Style="color: #6A7382; font-weight: 600;">Akcije</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="reservation">
+                        <MudTd>
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudAvatar Color="Color.Primary" Style="background-color: #6C85B0;" Size="Size.Medium">
+                                    @(reservation.PropertyTitle?.Substring(0, 1) ?? "P")
+                                </MudAvatar>
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.body1" Style="font-weight: 500;">@reservation.PropertyTitle</MudText>
+                                    <MudText Typo="Typo.caption" Style="color: #6A7382;">ID: @reservation.PropertyId</MudText>
+                                </MudStack>
+                            </MudStack>
+                        </MudTd>
+                        <MudTd>
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudAvatar Color="Color.Secondary" Style="background-color: #8C95A1;" Size="Size.Medium">
+                                    @if (_accountDetails.ContainsKey(reservation.AccountId))
+                                    {
+                                        var account = _accountDetails[reservation.AccountId];
+                                        @(account.FirstName?.Substring(0, 1) ?? "U")
+                                    }
+                                    else
+                                    {
+                                        @("U")
+                                    }
+                                </MudAvatar>
+                                <MudStack Spacing="0">
+                                    @if (_accountDetails.ContainsKey(reservation.AccountId))
+                                    {
+                                        var account = _accountDetails[reservation.AccountId];
+                                        <MudText Typo="Typo.body1" Style="font-weight: 500;">@($"{account.FirstName} {account.LastName}")</MudText>
+                                        <MudText Typo="Typo.caption" Style="color: #6A7382;">ID: @reservation.AccountId</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.body1">@reservation.AccountId</MudText>
+                                    }
+                                </MudStack>
+                            </MudStack>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Style="font-weight: 500;">
+                                @(reservation.StartDate.Year > 1 ? reservation.StartDate.ToString("dd.MM.yyyy") : "-")
+                            </MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Style="font-weight: 500;">
+                                @(reservation.EndDate.Year > 1 ? reservation.EndDate.ToString("dd.MM.yyyy") : "-")
+                            </MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string"
+                                Style="@GetStatusStyle(reservation.Status)" 
+                                Size="Size.Medium"
+                                Class="status-badge">
+                                @GetStatusText(reservation.Status)
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>
+                            @if (reservation.Status == "Pending")
+                            {
+                                <AuthorizeView Roles="Admin" Context="adminContext">
+                                    <Authorized>
+                                        <MudStack Row="true" Spacing="2">
+                                            <MudButton 
+                                                Color="Color.Success"
+                                                Variant="Variant.Filled"
+                                                Size="Size.Small"
+                                                Class="action-button"
+                                                Style="background-color: #1C2338;"
+                                                StartIcon="@Icons.Material.Filled.Check"
+                                                OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Confirmed"))">
+                                                Odobri
+                                            </MudButton>
+                                            <MudButton 
+                                                Color="Color.Error"
+                                                Variant="Variant.Outlined"
+                                                Size="Size.Small"
+                                                Class="action-button"
+                                                Style="border-color: #1C2338; color: #1C2338;"
+                                                StartIcon="@Icons.Material.Filled.Close"
+                                                OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Declined"))">
+                                                Odbij
+                                            </MudButton>
+                                        </MudStack>
+                                    </Authorized>
+                                </AuthorizeView>
+                            }
+                            else if (reservation.Status == "Confirmed")
+                            {
+                                <AuthorizeView Roles="Admin" Context="adminContext">
+                                    <Authorized>
+                                        <MudButton 
+                                            Color="Color.Error"
+                                            Variant="Variant.Outlined"
+                                            Size="Size.Small"
+                                            Class="action-button"
+                                            Style="border-color: #1C2338; color: #1C2338;"
+                                            StartIcon="@Icons.Material.Filled.Event"
+                                            OnClick="@(async () => await UpdateReservationStatus(reservation.Id, "Declined"))">
+                                            Otkaži
+                                        </MudButton>
+                                    </Authorized>
+                                </AuthorizeView>
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="py-8">
+                            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Default" />
+                            <MudText Typo="Typo.h6">Nema pronađenih rezervacija</MudText>
+                        </MudStack>
+                    </NoRecordsContent>
+                    <LoadingContent>
+                        <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="py-8">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                            <MudText>Učitavanje rezervacija...</MudText>
+                        </MudStack>
+                    </LoadingContent>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 5, 10, 15 }" />
+                    </PagerContent>
+                </MudTable>
+            </MudCardContent>
+        </Authorized>
+        <NotAuthorized>
+            <MudCard Elevation="3" Class="mt-6">
+                <MudCardContent>
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Lock">
+                        Molimo prijavite se za pregled rezervacija.
+                    </MudAlert>
+                </MudCardContent>
+            </MudCard>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudCard>
 
 @code {
     private bool _loading = true;
@@ -103,23 +233,17 @@
     private string _currentUserId;
     private string _userRole;
     private Dictionary<string, AccountDto> _accountDetails = new();
-    private Dictionary<int, PropertyDto> _propertyDetails = new();
-
+    
     protected override async Task OnInitializedAsync()
     {
         try
         {
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
-
+            
             if (user.Identity?.IsAuthenticated == true)
             {
-                _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(_currentUserId))
-                {
-                    _currentUserId = await TokenStorage.GetAccountId();
-                }
-
+                _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? await TokenStorage.GetAccountId();
                 _userRole = user.FindFirst(ClaimTypes.Role)?.Value;
                 await LoadReservations();
             }
@@ -127,7 +251,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error in OnInitializedAsync: {ex.Message}");
-            Snackbar.Add("Error initializing component", Severity.Error);
+            Snackbar.Add("Greška prilikom inicijalizacije komponente", Severity.Error);
         }
     }
 
@@ -137,38 +261,21 @@
         {
             _loading = true;
             StateHasChanged();
-
-            Console.WriteLine("Starting to load reservations...");
-            var reservations = await ReservationService.GetAll();
             
-            if (reservations == null || !reservations.Any())
+            var reservations = await ReservationService.GetAll();
+            Reservations = reservations?.ToList() ?? new List<ReservationDto>();
+            
+            if (_userRole != "Admin")
             {
-                Console.WriteLine("No reservations returned from service");
-                Reservations = new List<ReservationDto>();
-                return;
+                Reservations = Reservations.Where(r => r.AccountId == _currentUserId).ToList();
             }
-
-            Console.WriteLine($"Loaded {reservations.Count} reservations");
-            Console.WriteLine($"Current user ID: {_currentUserId}, Role: {_userRole}");
-
-            if (_userRole == "Admin")
-            {
-                Reservations = reservations.ToList();
-                Console.WriteLine("Admin view: showing all reservations");
-            }
-            else
-            {
-                Reservations = reservations.Where(r => r.AccountId == _currentUserId).ToList();
-                Console.WriteLine($"User view: showing {Reservations.Count} reservations for user {_currentUserId}");
-            }
-
+            
             await LoadAccountDetails();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error in LoadReservations: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            Snackbar.Add("Error loading reservations. Please try again later.", Severity.Error);
+            Snackbar.Add("Greška prilikom učitavanja rezervacija. Pokušajte ponovno kasnije.", Severity.Error);
             Reservations = new List<ReservationDto>();
         }
         finally
@@ -194,13 +301,28 @@
                     }
                 }
             }
-            StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading account details: {ex.Message}");
         }
     }
+
+    private string GetStatusStyle(string status) => status switch
+    {
+        "Pending" => "background-color: #FFF6E0; color: #E59400;",
+        "Confirmed" => "background-color: #E6F7E6; color: #2E7D32;",
+        "Declined" => "background-color: #FDEDED; color: #D32F2F;",
+        _ => "background-color: #F5F5F5; color: #757575;"
+    };
+
+    private string GetStatusText(string status) => status switch
+    {
+        "Pending" => "Na čekanju",
+        "Confirmed" => "Potvrđeno",
+        "Declined" => "Odbijeno",
+        _ => status
+    };
 
     private Color GetStatusColor(string status) => status switch
     {
@@ -210,132 +332,57 @@
         _ => Color.Default
     };
 
-
-
     private async Task UpdateReservationStatus(int reservationId, string status)
-
     {
-
         try
-          {
-
+        {
             _loading = true;
-
             StateHasChanged();
-
-
-
-            Console.WriteLine($"Starting status update for reservation {reservationId} to {status}");
-
-
-
-            // Dohvati trenutnu rezervaciju
-
+            
             var reservation = Reservations.FirstOrDefault(r => r.Id == reservationId);
-
             if (reservation == null)
-
             {
-
-                Snackbar.Add("Reservation not found", Severity.Error);
-
+                Snackbar.Add("Rezervacija nije pronađena", Severity.Error);
                 return;
-
             }
-
-
-
-            // Ako admin pokušava da odobri rezervaciju, proveri da li već postoji potvrđena rezervacija za isti period i property
-
-            if (status == "Confirmed")
-
-            {
-
-                bool alreadyApproved = Reservations.Any(r =>
-                    r.PropertyId == reservation.PropertyId &&
-
-                    r.Status == "Confirmed" &&
-
-                    ((r.StartDate <= reservation.EndDate && r.StartDate >= reservation.StartDate) ||
-
-                     (r.EndDate >= reservation.StartDate && r.EndDate <= reservation.EndDate)));
-
-
-
-                if (alreadyApproved)
-
-                {
-
-                    Snackbar.Add("Another reservation for this property in the same period is already confirmed.", Severity.Warning);
-
-                    return;
-
-                }
-
-            }
-
-
-
-            var updateDto = new ReservationUpdateDto
-
-                {
-
-                    Id = reservationId,
-
-                    Status = status
-
-                };
-
-
-
+            
+            var updateDto = new ReservationUpdateDto { Id = reservationId, Status = status };
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-
             var response = await ReservationService.Update(reservationId, updateDto, cts.Token);
-
-
-
+            
             if (response.IsSuccess)
-
             {
-
-                reservation.Status = status;
-
-                Snackbar.Add(response.Message ?? $"Reservation {status.ToLower()} successfully", Severity.Success);
-
+                string statusMsg = status switch
+                {
+                    "Confirmed" => "potvrđena",
+                    "Declined" => "odbijena",
+                    _ => status.ToLower()
+                };
+                
+                Snackbar.Add(response.Message ?? $"Rezervacija uspješno {statusMsg}", Severity.Success);
                 await LoadReservations();
-
             }
-
             else
-
             {
-
-                Snackbar.Add(response.Message ?? $"Failed to {status.ToLower()} reservation", Severity.Error);
-
+                string actionMsg = status switch
+                {
+                    "Confirmed" => "potvrditi",
+                    "Declined" => "odbiti",
+                    _ => status.ToLower()
+                };
+                
+                Snackbar.Add(response.Message ?? $"Nije moguće {actionMsg} rezervaciju", Severity.Error);
             }
-
         }
-
         catch (Exception ex)
-
         {
-
             Console.WriteLine($"Error updating reservation {reservationId}: {ex.Message}");
-
-            Snackbar.Add($"Error updating reservation: {ex.Message}", Severity.Error);
-
+            Snackbar.Add($"Greška prilikom ažuriranja rezervacije: {ex.Message}", Severity.Error);
         }
-
         finally
-
         {
-
             _loading = false;
-
             StateHasChanged();
-
         }
-
     }
-
-} 
+}

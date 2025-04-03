@@ -3,76 +3,172 @@
 @using MudBlazor
 @inherits PropertyListViewModel
 
-<MudTable Class="ml-4 mt-4 mr-4" Elevation="4" Items="@Properties" Dense Hover="true" Bordered="false" Filter="new Func<PropertyDto, bool>(FilterFunc)" Loading="@Loading">
-    <ToolBarContent>
-        <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" Variant="Variant.Outlined" style="font-weight: bold;" OnClick="@(() => CreateOrUpdateProperty(new PropertyDto()))">
-            Create New Property
-        </MudButton>
-        <MudSpacer />
-        <MudTextField T="string" Label="Search" Variant="Variant.Outlined" @bind-Value="SearchPropertyName" Clearable="true" Immediate="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" />
-    </ToolBarContent>
-    <ColGroup>
-        <col />
-        <col />
-        <col />
-        <col style="width:2px;" />
-        <col style="width:2px;" />
-    </ColGroup>
-    <HeaderContent>
-        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Image</MudTh>
-        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Title</MudTh>
-        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Description</MudTh>
-         <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Address</MudTh>
-        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Price</MudTh>
-        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Property Type</MudTh>
-        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Status</MudTh>
-        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;">Area</MudTh>
-        <MudTh style="color:var(--mud-palette-primary); font-weight: bold;"></MudTh>
-    </HeaderContent>
-<RowTemplate Context="property">
-    <MudTd>
-        @if (property.Images != null && property.Images.Any())
-        {
-            <MudImage Src="@property.Images.First().ImageUrl" Alt="Property Image" 
-                      Width="100" Height="75" ObjectFit="ObjectFit.Cover" 
-                      Elevation="25" Class="rounded-lg"/>
-        }
-        else
-        {
-            <MudImage Src="images/no-image.png" Alt="No Image" 
-                      Width="100" Height="75" ObjectFit="ObjectFit.Cover" 
-                      Elevation="25" Class="rounded-lg"/>
-        }
-    </MudTd>
-    <MudTd>@property.Title</MudTd>
-    <MudTd>@property.Description</MudTd>
-    <MudTd>@property.Address</MudTd>
-    <MudTd>@property.Price</MudTd>
-    <MudTd>@property.PropertyType</MudTd>
-    <MudTd>@property.Status</MudTd>
-    <MudTd>@property.Area</MudTd>
-    <MudTd>
-        <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => CreateOrUpdateProperty(property)" />
-        <MudIconButton Icon="@Icons.Material.Filled.Image" 
-                      OnClick="() => ManageImages(property)"
-                      Color="Color.Primary"
-                      Title="Manage Images" />
-    </MudTd>
-    <MudTd>
-        <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteProperty(property)" />
-    </MudTd>
-</RowTemplate>
+<MudPaper Elevation="0" Class="pa-4 rounded-lg" Style="background-color: #CDD2D8; margin: 16px;">
+    <MudCard Elevation="2" Class="rounded-xl overflow-hidden">
+        <MudCardHeader Style="background-color: #1C2338; padding: 16px;">
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Style="color: white; font-weight: 500;">
+                    Property Management
+                </MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudButton StartIcon="@Icons.Material.Filled.Add"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           Style="background-color: #6C85B0; color: white; font-weight: 500;"
+                           OnClick="@(() => CreateOrUpdateProperty(new PropertyDto()))">
+                    New Property
+                </MudButton>
+            </CardHeaderActions>
+        </MudCardHeader>
 
-    <NoRecordsContent>
-        <MudText>No properties found</MudText>
-    </NoRecordsContent>
-    <LoadingContent>
-        <MudText>Loading...</MudText>
-    </LoadingContent>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="Items per page" InfoFormat="@InfoFormat" />
-    </PagerContent>
-</MudTable>
+        <MudCardContent Class="pa-0">
+            <MudPaper Elevation="0" Class="d-flex align-center pa-4" 
+                      Style="background-color: white; border-bottom: 1px solid #CDD2D8;">
+                <MudText Typo="Typo.subtitle1" Style="color: #6A7382; font-weight: 500;">
+                    All Properties
+                </MudText>
+                <MudSpacer />
+                <MudTextField T="string"
+                              Placeholder="Search properties..."
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Search"
+                              AdornmentColor="Color.Primary"
+                              Style="width: 300px;"
+                              Class="ml-auto"
+                              @bind-Value="SearchPropertyName"
+                              Clearable="true"
+                              Immediate="true" />
+            </MudPaper>
+
+            <MudTable Items="@Properties"
+                      Dense="false"
+                      Hover="true"
+                      Bordered="false"
+                      Filter="new Func<PropertyDto, bool>(FilterFunc)"
+                      Loading="@Loading"
+                      Breakpoint="Breakpoint.Sm"
+                      LoadingProgressColor="Color.Primary"
+                      Style="color: #6A7382;">
+                <ColGroup>
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col style="width:120px;" />
+                </ColGroup>
+                <HeaderContent>
+                    <MudTh Style="color: #1C2338; font-weight: 500;">Image</MudTh>
+                    <MudTh Style="color: #1C2338; font-weight: 500;">Title</MudTh>
+                    <MudTh Style="color: #1C2338; font-weight: 500;">Description</MudTh>
+                    <MudTh Style="color: #1C2338; font-weight: 500;">Address</MudTh>
+                    <MudTh Style="color: #1C2338; font-weight: 500;">Price</MudTh>
+                    <MudTh Style="color: #1C2338; font-weight: 500;">Property Type</MudTh>
+                    <MudTh Style="color: #1C2338; font-weight: 500;">Area</MudTh>
+                    <MudTh Style="color: #1C2338; font-weight: 500;">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="property">
+                    <MudTd>
+                        @if (property.Images != null && property.Images.Any())
+                        {
+                            <MudAvatar Size="Size.Large" Style="height: 64px; width: 100px; border-radius: 8px;">
+                                <MudImage Src="@property.Images.First().ImageUrl"
+                                          Alt="Property Image"
+                                          ObjectFit="ObjectFit.Cover" />
+                            </MudAvatar>
+                        }
+                        else
+                        {
+                            <MudAvatar Size="Size.Large" Style="height: 64px; width: 100px; border-radius: 8px; background-color: #CDD2D8;">
+                                <MudIcon Icon="@Icons.Material.Outlined.Home" Size="Size.Large" Color="Color.Default" />
+                            </MudAvatar>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Title">
+                        <MudText Typo="Typo.body1" Style="font-weight: 500; color: #1C2338;">
+                            @property.Title
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Description">
+                        <MudText Typo="Typo.body2" Style="color: #8C95A1;">
+                            @(property.Description?.Length > 50 
+                                ? property.Description.Substring(0, 50) + "..." 
+                                : property.Description)
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Address">
+                        @property.Address
+                    </MudTd>
+                    <MudTd DataLabel="Price">
+                        <MudText Style="font-weight: 500; color: #6C85B0;">
+                            @property.Price
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Property Type">
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="Color.Primary"
+                                 Style="background-color: #6C85B0; color: white;">
+                            @property.PropertyType
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Area">
+                        @property.Area
+                    </MudTd>
+                    <MudTd>
+                        <div class="d-flex">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Style="color: #6C85B0;"
+                                           OnClick="() => CreateOrUpdateProperty(property)"
+                                           Title="Edit Property" />
+                            <MudIconButton Icon="@Icons.Material.Outlined.Photo"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Style="color: #6C85B0;"
+                                           OnClick="() => ManageImages(property)"
+                                           Title="Manage Images" />
+                            <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="() => DeleteProperty(property)"
+                                           Title="Delete Property" />
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <div class="d-flex flex-column align-center justify-center pa-4">
+                        <MudIcon Icon="@Icons.Material.Outlined.Search"
+                                 Size="Size.Large"
+                                 Style="color: #8C95A1; margin-bottom: 16px;" />
+                        <MudText Typo="Typo.subtitle1" Style="color: #6A7382;">
+                            No properties found
+                        </MudText>
+                        <MudText Typo="Typo.body2" Style="color: #8C95A1;">
+                            Try adjusting your search or create a new property.
+                        </MudText>
+                    </div>
+                </NoRecordsContent>
+                <LoadingContent>
+                    <div class="d-flex justify-center align-center pa-4">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        <MudText Class="ml-3">Loading properties...</MudText>
+                    </div>
+                </LoadingContent>
+                <PagerContent>
+                    <MudTablePager RowsPerPageString="Properties per page"
+                                   InfoFormat="@InfoFormat"
+                                   Style="color: #6A7382;" />
+                </PagerContent>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+</MudPaper>
 
 @code {
     protected async Task DeleteProperty(PropertyDto property)
@@ -82,12 +178,16 @@
         parameters.Add("ButtonText", "Delete");
         parameters.Add("Color", Color.Error);
 
-        var options = new DialogOptions() 
-        { 
-            CloseButton = true, 
-            MaxWidth = MaxWidth.ExtraSmall 
+        var options = new DialogOptions()
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            CloseOnEscapeKey = true,
+            FullWidth = true,
+            NoHeader = false,
+            Position = DialogPosition.Center
         };
-        
+
         var dialog = await DialogService!.ShowAsync<ConfirmComponent>("Delete Property", parameters, options);
         var result = await dialog.Result;
 
@@ -95,14 +195,12 @@
         {
             Loading = true;
             StateHasChanged();
-            
+
             var response = await PropertyService!.Delete(property.PropertyId);
             HandleResponse(response, property);
-            
+
             Loading = false;
             StateHasChanged();
         }
     }
 }
-
-
