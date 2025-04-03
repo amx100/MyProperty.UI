@@ -23,23 +23,83 @@
         </MudCardHeader>
 
         <MudCardContent Class="pa-0">
-            <MudPaper Elevation="0" Class="d-flex align-center pa-4" 
+            <MudPaper Elevation="0" Class="d-flex flex-column pa-4" 
                       Style="background-color: white; border-bottom: 1px solid #CDD2D8;">
-                <MudText Typo="Typo.subtitle1" Style="color: #6A7382; font-weight: 500;">
-                    All Properties
-                </MudText>
-                <MudSpacer />
-                <MudTextField T="string"
-                              Placeholder="Search properties..."
-                              Variant="Variant.Outlined"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Outlined.Search"
-                              AdornmentColor="Color.Primary"
-                              Style="width: 300px;"
-                              Class="ml-auto"
-                              @bind-Value="SearchPropertyName"
-                              Clearable="true"
-                              Immediate="true" />
+                <div class="d-flex align-center mb-4">
+                    <MudText Typo="Typo.subtitle1" Style="color: #6A7382; font-weight: 500;">
+                        All Properties
+                    </MudText>
+                    <MudSpacer />
+                    <MudTextField T="string"
+                                Placeholder="Search properties..."
+                                Variant="Variant.Outlined"
+                                Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Outlined.Search"
+                                AdornmentColor="Color.Primary"
+                                Style="width: 300px;"
+                                Class="ml-auto"
+                                @bind-Value="SearchPropertyName"
+                                Clearable="true"
+                                Immediate="true" />
+                </div>
+
+                <MudExpansionPanels Class="mt-4">
+                    <MudExpansionPanel Text="Filters" Style="background-color: #F8FAFC;">
+                        <MudGrid>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSelect T="string" 
+                                         Label="Property Type" 
+                                         Variant="Variant.Outlined"
+                                         @bind-Value="SelectedPropertyType"
+                                         Clearable="true"
+                                         Style="width: 100%;">
+                                    @foreach (var type in PropertyTypes)
+                                    {
+                                        <MudSelectItem Value="@type">@type</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSelect T="string" 
+                                         Label="Status" 
+                                         Variant="Variant.Outlined"
+                                         @bind-Value="SelectedStatus"
+                                         Clearable="true"
+                                         Style="width: 100%;">
+                                    @foreach (var status in StatusOptions)
+                                    {
+                                        <MudSelectItem Value="@status">@status</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <div class="d-flex align-center">
+                                    <MudNumericField T="double?"
+                                                    Label="Min Area (m²)" 
+                                                    Variant="Variant.Outlined"
+                                                    @bind-Value="MinArea"
+                                                    Clearable="true"
+                                                    Style="width: 100%;" />
+                                    <MudText Class="mx-2">-</MudText>
+                                    <MudNumericField T="double?"
+                                                    Label="Max Area (m²)" 
+                                                    Variant="Variant.Outlined"
+                                                    @bind-Value="MaxArea"
+                                                    Clearable="true"
+                                                    Style="width: 100%;" />
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+                        <div class="d-flex justify-end mt-4">
+                            <MudButton Variant="Variant.Outlined"
+                                     Color="Color.Primary"
+                                     OnClick="ClearFilters"
+                                     StartIcon="@Icons.Material.Filled.Clear">
+                                Clear Filters
+                            </MudButton>
+                        </div>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
             </MudPaper>
 
             <MudTable Items="@Properties"
@@ -204,3 +264,32 @@
         }
     }
 }
+
+<style>
+    ::deep .mud-expansion-panel {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    ::deep .mud-expansion-panel-header {
+        background-color: #F8FAFC;
+        border-radius: 8px;
+        padding: 16px;
+    }
+
+    ::deep .mud-expansion-panel-content {
+        padding: 16px;
+    }
+
+    ::deep .mud-select {
+        background-color: white;
+    }
+
+    ::deep .mud-numeric-field {
+        background-color: white;
+    }
+
+    ::deep .mud-expansion-panel-header:hover {
+        background-color: #F1F5F9;
+    }
+</style>

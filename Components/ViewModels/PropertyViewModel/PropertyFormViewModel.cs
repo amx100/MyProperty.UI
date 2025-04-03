@@ -16,7 +16,7 @@ namespace ViewModels
 		private MudForm? form;
 
 		public IEnumerable<string> PropertyTypes { get; set; } = new List<string> { "House", "Apartment", "Office" };
-		public IEnumerable<string> StatusOptions { get; set; } = new List<string> { "Available", "Reserved", "Sold" };
+		public IEnumerable<string> StatusOptions { get; set; } = new List<string> { "Available", "Reserved"};
 
 		protected override async Task OnInitializedAsync()
 		{

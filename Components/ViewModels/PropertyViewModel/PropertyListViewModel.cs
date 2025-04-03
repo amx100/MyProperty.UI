@@ -13,6 +13,13 @@ namespace ViewModels
         protected ObservableCollection<PropertyDto> Properties { get; set; } = new ObservableCollection<PropertyDto>();
 
         protected string? SearchPropertyName { get; set; }
+        protected string? SelectedPropertyType { get; set; }
+        protected string? SelectedStatus { get; set; }
+        protected double? MinArea { get; set; }
+        protected double? MaxArea { get; set; }
+
+        protected IEnumerable<string> PropertyTypes { get; set; } = new List<string> { "House", "Apartment", "Office" };
+        protected IEnumerable<string> StatusOptions { get; set; } = new List<string> { "Available", "Reserved" };
 
         protected override async Task OnInitializedAsync()
         {
@@ -100,8 +107,45 @@ namespace ViewModels
 
         protected bool FilterFunc(PropertyDto element)
         {
-            return string.IsNullOrWhiteSpace(SearchPropertyName) ||
-                   element.Title!.Contains(SearchPropertyName, StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(SearchPropertyName) &&
+                string.IsNullOrWhiteSpace(SelectedPropertyType) &&
+                string.IsNullOrWhiteSpace(SelectedStatus) &&
+                !MinArea.HasValue &&
+                !MaxArea.HasValue)
+            {
+                return true;
+            }
+
+            bool matchesSearch = string.IsNullOrWhiteSpace(SearchPropertyName) ||
+                               element.Title!.Contains(SearchPropertyName, StringComparison.OrdinalIgnoreCase);
+
+            bool matchesType = string.IsNullOrWhiteSpace(SelectedPropertyType) ||
+                             element.PropertyType == SelectedPropertyType;
+
+            bool matchesStatus = string.IsNullOrWhiteSpace(SelectedStatus) ||
+                               element.Status == SelectedStatus;
+
+            bool matchesArea = true;
+            if (MinArea.HasValue && element.Area < MinArea.Value)
+            {
+                matchesArea = false;
+            }
+            if (MaxArea.HasValue && element.Area > MaxArea.Value)
+            {
+                matchesArea = false;
+            }
+
+            return matchesSearch && matchesType && matchesStatus && matchesArea;
+        }
+
+        protected void ClearFilters()
+        {
+            SearchPropertyName = null;
+            SelectedPropertyType = null;
+            SelectedStatus = null;
+            MinArea = null;
+            MaxArea = null;
+            StateHasChanged();
         }
 
         public void HandleResponse(GeneralResponseDto response, PropertyDto property)
