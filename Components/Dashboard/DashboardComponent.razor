@@ -114,22 +114,23 @@
 <style>
     /* Modern clean design */
     :root {
-        --primary-color: #4361ee;
-        --primary-light: #4895ef;
-        --success-color: #10b981;
-        --warning-color: #f59e0b;
-        --error-color: #ef4444;
-        --surface-color: #ffffff;
-        --background-color: #f8fafc;
-        --text-primary: #1e293b;
-        --text-secondary: #64748b;
-        --border-color: #e2e8f0;
+        --primary-color: #6881AC !important;
+        --primary-light: #8C95A2 !important;
+        --primary-dark: #1A1D2C !important;
+        --success-color:rgb(76, 111, 172) !important;
+        --warning-color: #6A7382 !important;
+        --error-color: #CDD2D8 !important;
+        --surface-color: #ffffff !important;
+        --background-color: #f8fafc !important;
+        --text-primary: #1A1D2C !important;
+        --text-secondary: #6A7382 !important;
+        --border-color: #CDD2D8 !important;
         --radius-sm: 8px;
         --radius-md: 12px;
         --radius-lg: 16px;
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.05);
-        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        --shadow-sm: 0 1px 3px rgba(26, 29, 44, 0.12), 0 1px 2px rgba(26, 29, 44, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(26, 29, 44, 0.1), 0 2px 4px -1px rgba(26, 29, 44, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(26, 29, 44, 0.1), 0 4px 6px -2px rgba(26, 29, 44, 0.05);
         --transition: all 0.3s ease;
     }
 
@@ -148,7 +149,7 @@
 
     /* Property card */
     .property-card {
-        background-color: var(--surface-color);
+        background-color: var(--surface-color) !important;
         border-radius: var(--radius-md);
         overflow: hidden;
         box-shadow: var(--shadow-md);
@@ -187,8 +188,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(45deg, #f1f5f9, #e2e8f0);
-        color: var(--text-secondary);
+        background: linear-gradient(45deg, #f1f5f9, #CDD2D8);
+        color: var(--text-secondary) !important;
         font-size: 3rem;
     }
 
@@ -206,18 +207,18 @@
     }
 
         .property-status.available {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: var(--success-color);
+            background-color: rgba(108, 136, 185, 0.89) !important;
+            color: white !important;
         }
 
         .property-status.reserved {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: var(--error-color);
+            background-color: rgba(131, 149, 189, 0.63) !important;
+            color: white !important;
         }
 
         .property-status.pending {
-            background-color: rgba(245, 158, 11, 0.15);
-            color: var(--warning-color);
+            background-color: rgba(106, 115, 130, 0.15) !important;
+            color: white !important;
         }
 
     /* Card content */
@@ -232,14 +233,14 @@
         font-size: 1.3rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: var(--text-primary);
+        color: var(--text-primary) !important;
     }
 
     .property-location {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: var(--text-secondary);
+        color: var(--text-secondary) !important;
         font-size: 0.9rem;
         margin-bottom: 1.5rem;
     }
@@ -256,21 +257,21 @@
         display: flex;
         flex-direction: column;
         padding: 0.75rem;
-        background-color: var(--background-color);
+        background-color: var(--background-color) !important;
         border-radius: var(--radius-sm);
         text-align: center;
     }
 
     .detail-value {
         font-weight: 600;
-        color: var(--text-primary);
+        color: var(--text-primary) !important;
         font-size: 1rem;
         margin-bottom: 0.25rem;
     }
 
     .detail-label {
         font-size: 0.8rem;
-        color: var(--text-secondary);
+        color: var(--text-secondary) !important;
     }
 
     /* Card action */
@@ -278,13 +279,54 @@
         margin-top: auto;
     }
 
-    .reservation-button, .reserved-button {
+    /* Override MudBlazor button styles */
+    ::deep .mud-button-filled.mud-button-filled-primary {
+        color: #ffffff !important;
+        --mud-ripple-color: #ffffff !important;
+        background-color: var(--primary-color) !important;
+    }
+
+    ::deep .mud-button-filled.mud-button-filled-primary:hover {
+        background-color: var(--primary-dark) !important;
+    }
+
+    ::deep .mud-button-outlined.mud-button-outlined-error {
+        color: var(--error-color) !important;
+        border-color: var(--error-color) !important;
+    }
+
+    ::deep .mud-button-outlined.mud-button-outlined-error:hover {
+        background-color: rgba(205, 210, 216, 0.1) !important;
+    }
+
+    .reservation-button {
         width: 100%;
         padding: 0.75rem !important;
         border-radius: var(--radius-sm) !important;
         font-weight: 500 !important;
         letter-spacing: 0.3px !important;
         transition: var(--transition) !important;
+        background-color: var(--primary-color) !important;
+        color: #ffffff !important;
+    }
+
+    .reservation-button:hover {
+        background-color: var(--primary-dark) !important;
+    }
+
+    .reserved-button {
+        width: 100%;
+        padding: 0.75rem !important;
+        border-radius: var(--radius-sm) !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.3px !important;
+        transition: var(--transition) !important;
+        color: var(--error-color) !important;
+        border-color: var(--error-color) !important;
+    }
+
+    .reserved-button:hover {
+        background-color: rgba(205, 210, 216, 0.1) !important;
     }
 
     /* Loading state */
@@ -295,7 +337,7 @@
     }
 
     .property-card.loading {
-        background-color: var(--surface-color);
+        background-color: var(--surface-color) !important;
         border-radius: var(--radius-md);
         box-shadow: var(--shadow-sm);
         overflow: hidden;
@@ -303,7 +345,7 @@
 
     .card-image-skeleton {
         height: 220px;
-        background-color: #e2e8f0;
+        background-color: #CDD2D8;
         position: relative;
         overflow: hidden;
     }
@@ -326,7 +368,7 @@
     .skeleton-line {
         height: 1.2rem;
         width: 100%;
-        background-color: #e2e8f0;
+        background-color: #CDD2D8;
         border-radius: 4px;
         margin-bottom: 1rem;
         position: relative;
@@ -362,26 +404,26 @@
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
-        background-color: var(--surface-color);
+        background-color: var(--surface-color) !important;
         border-radius: var(--radius-lg);
         box-shadow: var(--shadow-sm);
     }
 
     .empty-icon {
         font-size: 4rem;
-        color: var(--primary-light);
+        color: var(--primary-light) !important;
         margin-bottom: 1.5rem;
     }
 
     .empty-state h3 {
         font-size: 1.5rem;
         font-weight: 600;
-        color: var(--text-primary);
+        color: var(--text-primary) !important;
         margin-bottom: 0.75rem;
     }
 
     .empty-state p {
-        color: var(--text-secondary);
+        color: var(--text-secondary) !important;
         max-width: 400px;
         margin: 0 auto;
     }
