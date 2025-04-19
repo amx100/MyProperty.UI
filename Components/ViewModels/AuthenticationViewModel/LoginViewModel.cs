@@ -2,13 +2,13 @@
 
 public class LoginViewModel : ComponentBaseViewModel
 {
-    protected LoginDto Login = new();
+    protected LoginDto Login { get; set; } = new();
     protected bool ShowAuthError { get; set; }
     protected string? Error { get; set; }
     
     protected bool showPassword;
-    protected InputType PasswordInput = InputType.Password;
-    protected string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+    protected InputType PasswordInput { get; set; } = InputType.Password;
+    protected string PasswordInputIcon { get; set; } = Icons.Material.Filled.VisibilityOff;
 
     protected override async Task OnInitializedAsync()
     {

@@ -6,21 +6,26 @@
 <MudDialog>
     <DialogContent>
         <MudContainer Style="max-width: 500px">
-            @if (string.IsNullOrEmpty(PropertyTitle) || PropertyId == 0 || string.IsNullOrEmpty(AccountId))
+            @if (PropertyId == 0 || string.IsNullOrEmpty(AccountId))
             {
                 <MudAlert Severity="Severity.Error">Invalid reservation parameters</MudAlert>
             }
             else
             {
-                <MudText Typo="Typo.h6" Class="mb-4">Reserve @PropertyTitle</MudText>
-                
-                <MudDateRangePicker @bind-DateRange="_dateRange" 
-                                   Label="Reservation Period"
-                                   DisablePassedDates="true"
-                                   Required="true"
-                                   Class="mb-4"/>
+                <MudText Typo="Typo.h6" Class="mb-4">Make Reservation</MudText>
 
-                @if (_errorMessage != null)
+                @if (!string.IsNullOrEmpty(PropertyTitle))
+                {
+                    <MudText Class="mb-4">Property: @PropertyTitle</MudText>
+                }
+
+                <MudDateRangePicker @bind-DateRange="_dateRange" 
+                                    Label="Reservation Period"
+                                    DisablePassedDates="true"
+                                    Required="true"
+                                    Class="mb-4"/>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
                 {
                     <MudAlert Severity="Severity.Error" Class="my-2">@_errorMessage</MudAlert>
                 }
@@ -30,8 +35,8 @@
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton Color="Color.Primary" 
-                  OnClick="Submit" 
-                  Disabled="@(string.IsNullOrEmpty(PropertyTitle) || PropertyId == 0 || string.IsNullOrEmpty(AccountId) || _dateRange.Start == null || _dateRange.End == null)">
+                   OnClick="Submit" 
+                   Disabled="@(PropertyId == 0 || string.IsNullOrEmpty(AccountId) || _dateRange.Start == null || _dateRange.End == null)">
             Submit Reservation
         </MudButton>
     </DialogActions>
@@ -39,25 +44,24 @@
 
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
-    
+
     [Parameter] public int PropertyId { get; set; }
     [Parameter] public string AccountId { get; set; }
     [Parameter] public string PropertyTitle { get; set; }
     [Parameter] public DateTime? StartDate { get; set; }
     [Parameter] public DateTime? EndDate { get; set; }
 
-    private DateRange _dateRange = new DateRange();
-    private string _errorMessage;
+    private DateRange _dateRange = new();
+    private string _errorMessage = string.Empty;
 
     protected override void OnInitialized()
     {
-        if (string.IsNullOrEmpty(AccountId) || PropertyId == 0 || string.IsNullOrEmpty(PropertyTitle))
+        if (string.IsNullOrEmpty(AccountId) || PropertyId == 0)
         {
             _errorMessage = "Invalid reservation parameters. Please try again.";
-            Console.WriteLine($"Invalid parameters - AccountId: {AccountId}, PropertyId: {PropertyId}, Title: {PropertyTitle}");
+            Console.WriteLine($"Invalid parameters - AccountId: {AccountId}, PropertyId: {PropertyId}");
         }
-        
-        // Initialize date range with passed parameters or default values
+
         _dateRange = new DateRange(
             StartDate ?? DateTime.Today,
             EndDate ?? DateTime.Today.AddDays(7)
@@ -66,15 +70,17 @@
 
     private async Task Submit()
     {
+        _errorMessage = string.Empty;
+
         if (_dateRange.Start == null || _dateRange.End == null)
         {
-            _errorMessage = "Please select reservation dates";
+            _errorMessage = "Please select reservation dates.";
             return;
         }
 
         if (string.IsNullOrEmpty(AccountId) || PropertyId == 0)
         {
-            _errorMessage = "Invalid reservation parameters";
+            _errorMessage = "Invalid reservation parameters.";
             return;
         }
 
@@ -90,24 +96,24 @@
         {
             Console.WriteLine($"Creating reservation: Start={reservation.StartDate:yyyy-MM-dd}, End={reservation.EndDate:yyyy-MM-dd}");
             var response = await ReservationService.Create(reservation);
-            
-            if (response.IsSuccess)
+
+            if (response?.IsSuccess == true)
             {
                 Snackbar.Add("Reservation request submitted successfully!", Severity.Success);
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else
             {
-                _errorMessage = response.Message ?? "Failed to create reservation";
+                _errorMessage = response?.Message ?? "Failed to create reservation.";
                 StateHasChanged();
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = "An error occurred while creating the reservation";
+            _errorMessage = "An error occurred while creating the reservation.";
             Console.WriteLine($"Error creating reservation: {ex.Message}");
         }
     }
 
     private void Cancel() => MudDialog.Cancel();
-} 
+}

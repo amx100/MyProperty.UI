@@ -13,16 +13,100 @@
 @inject TokenStorage tokenStorage
 
 <div class="dashboard-container">
+ <div class="filters-container">
+    <div class="filters-header">
+        <div class="filters-title">
+            <i class="bi bi-funnel filter-icon"></i>
+            <h2 class="filter-title">Pronađi savršenu nekretninu</h2>
+        </div>
+        <button class="clear-filters-btn" @onclick="ClearFilters">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            Očisti filtere
+        </button>
+    </div>
+    
+    <div class="filters-body">
+        <div class="search-container">
+            <div class="search-field">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" 
+                       placeholder="Pretraži po naslovu ili adresi..." 
+                       @bind="SearchPropertyName" 
+                       @bind:event="oninput"
+                       class="search-input" />
+                @if (!string.IsNullOrEmpty(SearchPropertyName))
+                {
+                    <button class="clear-input" @onclick="@(() => SearchPropertyName = null)">
+                        <i class="bi bi-x"></i>
+                    </button>
+                }
+            </div>
+        </div>
+                     
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label class="filter-label">Tip nekretnine</label>
+                <div class="select-container">
+                    <i class="bi bi-house-door select-icon"></i>
+                    <select class="filter-select" @bind="SelectedPropertyType">
+                        <option value="">Svi tipovi</option>
+                        @foreach (var type in PropertyTypes)
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <div class="select-container">
+                    <i class="bi bi-bookmark select-icon"></i>
+                    <select class="filter-select" @bind="SelectedStatus">
+                        <option value="">Svi statusi</option>
+                        @foreach (var status in StatusOptions)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-group area-filter">
+                <label class="area-label">Površina (m²)</label>
+                <div class="area-inputs">
+                    <div class="input-container">
+                        <input type="number" 
+                               class="area-input" 
+                               placeholder="Min"
+                               @bind="MinArea"
+                               @bind:event="oninput" />
+                    </div>
+                    <div class="area-divider"></div>
+                    <div class="input-container">
+                        <input type="number" 
+                               class="area-input" 
+                               placeholder="Max"
+                               @bind="MaxArea"
+                               @bind:event="oninput" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
     @if (_properties == null)
     {
-        <div class="skeleton-grid">
+        <div class="loading-grid">
             @for (var i = 0; i < 3; i++)
             {
-                <div class="property-card shimmer">
-                    <div class="media-loader pulse"></div>
-                    <div class="content-loader">
-                        <div class="line wave"></div>
-                        <div class="line short wave"></div>
+                <div class="property-card loading">
+                    <div class="card-image-skeleton"></div>
+                    <div class="card-content-skeleton">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
                     </div>
                 </div>
             }
@@ -31,96 +115,78 @@
     else if (!_properties.Any())
     {
         <div class="empty-state">
-            <div class="particle-grid">
-                @for (int i = 0; i < 50; i++)
-                {
-                    <div class="particle" style="--delay: @(i * 0.02)"></div>
-                }
+            <div class="empty-icon">
+                <i class="bi bi-building-add"></i>
             </div>
-            <h3 class="neon-title">Let's Start Building</h3>
-            <p class="subtitle">Add your first property to begin the journey</p>
+            <h3>Počnimo zajedno</h3>
+            <p>Dodajte svoju prvu nekretninu kako biste započeli</p>
         </div>
     }
     else
     {
-        <div class="property-grid cinematic-grid">
-            @foreach (var property in _properties)
+        <div class="property-grid">
+            @foreach (var property in _properties.Where(FilterFunc))
             {
                 <div class="property-card" @key="property.PropertyId">
-                    <div class="card-inner hover-transform">
-                        <div class="media-container parallax-layer">
-                            @if (property.Images?.Any() == true)
-                            {
-                                <img src="@property.Images.First().ImageUrl"
-                                     class="zoom-blur"
-                                     alt="@property.Title" />
-                            }
-                            else
-                            {
-                                <div class="media-placeholder gradient-animate">
-                                    <i class="bi bi-building"></i>
-                                </div>
-                            }
-                            <div class="corner-ribbon @property.Status.ToLower()">
-                                <span>@property.Status</span>
+                    <div class="card-media">
+                        @if (property.Images?.Any() == true)
+                        {
+                            <img src="@property.Images.First().ImageUrl" alt="@property.Title" />
+                        }
+                        else
+                        {
+                            <div class="media-placeholder">
+                                <i class="bi bi-building"></i>
+                            </div>
+                        }
+                        <div class="property-status @GetPropertyStatus(property).ToLower()">
+                            @GetPropertyStatus(property)
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <h3 class="property-title">@property.Title</h3>
+                        <p class="property-location">
+                            <i class="bi bi-geo-alt"></i>
+                            @property.Address
+                        </p>
+
+                        <div class="property-details">
+                            <div class="detail-item">
+                                <span class="detail-value">@property.Price.ToString("C")</span>
+                                <span class="detail-label">po noćenju</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value">@property.PropertyType</span>
+                                <span class="detail-label">tip</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value">@property.Area m²</span>
+                                <span class="detail-label">površina</span>
                             </div>
                         </div>
 
-                        <div class="card-content">
-                            <div class="property-header">
-                                <h3 class="title-gradient">@property.Title</h3>
-                                <p class="location">
-                                    <i class="bi bi-geo-alt"></i>
-                                    @property.Address
-                                </p>
-                            </div>
-
-                            <div class="data-grid">
-                                <div class="data-item price-bubble">
-                                    
-                                    <span class="value">@property.Price.ToString("C")</span>
-                                    <div class="price-underline"></div>
-                                </div>
-                                <div class="data-item type-frame">
-                                    <span class="value">@property.PropertyType</span>
-                                    <div class="type-border"></div>
-                                </div>
-                                <div class="data-item area-frame">
-                                 
-                                    <span class="value">@property.Area m²</span>
-                                    <div class="area-dots"></div>
-                                </div>
-                            </div>
-
-                            <div class="action-bar">
-                                @if (property.Status?.Equals("Available", StringComparison.OrdinalIgnoreCase) == true)
-                                {
-                                    <MudButton Color="Color.Primary"
-                                               Class="cyber-button"
-                                               OnClick="@(() => CreateReservation(property))">
-                                        <span class="button-content">
-                                            <i class="bi bi-lightning-charge"></i>
-                                            Make Reservation
-                                        </span>
-                                        <div class="button-frame"></div>
-                                        <div class="button-overlay"></div>
-                                    </MudButton>
-                                }
-                                else
-                                {
-                                    <MudButton Color="Color.Warning"
-                                               Class="cyber-button-reserved"
-                                               Disabled="true">
-                                        <span class="button-content">
-                                            <i class="bi bi-x-octagon"></i>
-                                            Reserved
-                                        </span>
-                                        <div class="button-frame"></div>
-                                        <div class="button-overlay"></div>
-
-                                    </MudButton>
-                                }
-                            </div>
+                        <div class="card-action">
+                            @if (IsPropertyAvailable(property))
+                            {
+                                <MudButton Color="Color.Primary"
+                                           Variant="Variant.Filled"
+                                           Class="reservation-button"
+                                           OnClick="@(() => CreateReservation(property))">
+                                    <i class="bi bi-calendar-check me-2"></i>
+                                    Rezerviši
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Color="Color.Error"
+                                           Variant="Variant.Outlined"
+                                           Class="reserved-button"
+                                           Disabled="true">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Rezervisano
+                                </MudButton>
+                            }
                         </div>
                     </div>
                 </div>
@@ -129,46 +195,286 @@
     }
 </div>
 
-<style scoped>
-    @@keyframes float {
-        0%, 100% {
-            transform: translateY(0);
-        }
-
-        50% {
-            transform: translateY(-10px);
-        }
+<style>
+    /* Modern clean design */
+    :root {
+        --primary-color: #6881AC !important;
+        --primary-light: #8C95A2 !important;
+        --primary-dark: #1A1D2C !important;
+        --success-color:rgb(76, 111, 172) !important;
+        --warning-color: #6A7382 !important;
+        --error-color: #CDD2D8 !important;
+        --surface-color: #ffffff !important;
+        --background-color: #f8fafc !important;
+        --text-primary: #1A1D2C !important;
+        --text-secondary: #6A7382 !important;
+        --border-color: #CDD2D8 !important;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --shadow-sm: 0 1px 3px rgba(26, 29, 44, 0.12), 0 1px 2px rgba(26, 29, 44, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(26, 29, 44, 0.1), 0 2px 4px -1px rgba(26, 29, 44, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(26, 29, 44, 0.1), 0 4px 6px -2px rgba(26, 29, 44, 0.05);
+        --transition: all 0.3s ease;
     }
 
-    @@keyframes gradientFlow {
-        0% {
-            background-position: 0% 50%;
-        }
-
-        50% {
-            background-position: 100% 50%;
-        }
-
-        100% {
-            background-position: 0% 50%;
-        }
+    .dashboard-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem;
     }
 
-    @@keyframes borderPulse {
-        0% {
-            opacity: 0.3;
-        }
-
-        50% {
-            opacity: 1;
-        }
-
-        100% {
-            opacity: 0.3;
-        }
+    /* Property grid */
+    .property-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
     }
 
-    @@keyframes cyberScan {
+    /* Property card */
+    .property-card {
+        background-color: var(--surface-color) !important;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        transition: var(--transition);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .property-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+
+    /* Card media */
+    .card-media {
+        height: 220px;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+    .property-card:hover .card-media img {
+        transform: scale(1.05);
+    }
+
+    .media-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(45deg, #f1f5f9, #CDD2D8);
+        color: var(--text-secondary) !important;
+        font-size: 3rem;
+    }
+
+    /* Property status */
+    .property-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .property-status.available {
+            background-color: rgba(108, 136, 185, 0.89) !important;
+            color: white !important;
+        }
+
+        .property-status.reserved {
+            background-color: rgba(131, 149, 189, 0.63) !important;
+            color: white !important;
+        }
+
+        .property-status.pending {
+            background-color: rgba(106, 115, 130, 0.15) !important;
+            color: white !important;
+        }
+
+    /* Card content */
+    .card-content {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .property-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary) !important;
+    }
+
+    .property-location {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary) !important;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Property details */
+    .property-details {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem;
+        background-color: var(--background-color) !important;
+        border-radius: var(--radius-sm);
+        text-align: center;
+    }
+
+    .detail-value {
+        font-weight: 600;
+        color: var(--text-primary) !important;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary) !important;
+    }
+
+    /* Card action */
+    .card-action {
+        margin-top: auto;
+    }
+
+    /* Override MudBlazor button styles */
+    ::deep .mud-button-filled.mud-button-filled-primary {
+        color: #ffffff !important;
+        --mud-ripple-color: #ffffff !important;
+        background-color: var(--primary-color) !important;
+    }
+
+    ::deep .mud-button-filled.mud-button-filled-primary:hover {
+        background-color: var(--primary-dark) !important;
+    }
+
+    ::deep .mud-button-outlined.mud-button-outlined-error {
+        color: var(--error-color) !important;
+        border-color: var(--error-color) !important;
+    }
+
+    ::deep .mud-button-outlined.mud-button-outlined-error:hover {
+        background-color: rgba(205, 210, 216, 0.1) !important;
+    }
+
+    .reservation-button {
+        width: 100%;
+        padding: 0.75rem !important;
+        border-radius: var(--radius-sm) !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.3px !important;
+        transition: var(--transition) !important;
+        background-color: var(--primary-color) !important;
+        color: #ffffff !important;
+    }
+
+    .reservation-button:hover {
+        background-color: var(--primary-dark) !important;
+    }
+
+    .reserved-button {
+        width: 100%;
+        padding: 0.75rem !important;
+        border-radius: var(--radius-sm) !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.3px !important;
+        transition: var(--transition) !important;
+        color: var(--error-color) !important;
+        border-color: var(--error-color) !important;
+    }
+
+    .reserved-button:hover {
+        background-color: rgba(205, 210, 216, 0.1) !important;
+    }
+
+    /* Loading state */
+    .loading-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .property-card.loading {
+        background-color: var(--surface-color) !important;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .card-image-skeleton {
+        height: 220px;
+        background-color: #CDD2D8;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .card-image-skeleton::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: loading-animation 1.5s infinite;
+        }
+
+    .card-content-skeleton {
+        padding: 1.5rem;
+    }
+
+    .skeleton-line {
+        height: 1.2rem;
+        width: 100%;
+        background-color: #CDD2D8;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .skeleton-line::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: loading-animation 1.5s infinite;
+        }
+
+        .skeleton-line.short {
+            width: 60%;
+        }
+
+    @@keyframes loading-animation {
         0% {
             transform: translateX(-100%);
         }
@@ -178,287 +484,283 @@
         }
     }
 
-    @@keyframes underlineFlow {
-        0% {
-            background-position: -200% 0;
-        }
-
-        100% {
-            background-position: 200% 0;
-        }
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background-color: var(--surface-color) !important;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
     }
 
-    .dashboard-container {
-        padding: 3rem;
-        max-width: 1600px;
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--primary-light) !important;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary) !important;
+        margin-bottom: 0.75rem;
+    }
+
+    .empty-state p {
+        color: var(--text-secondary) !important;
+        max-width: 400px;
         margin: 0 auto;
     }
 
-    .cinematic-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-        gap: 3rem;
-        perspective: 2000px;
-    }
-
-    .property-card {
-        background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
-        border-radius: 20px;
-        overflow: hidden;
-        position: relative;
-        transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    }
-
-    .hover-transform:hover {
-        transform: translateY(-10px) rotateX(5deg) rotateY(1deg);
-    }
-
-    .media-container {
-        height: 300px;
-        position: relative;
-        overflow: hidden;
-        clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
-    }
-
-    .zoom-blur {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-        .zoom-blur:hover {
-            transform: scale(1.1);
-            filter: blur(2px);
-        }
-
-    .corner-ribbon {
-        position: absolute;
-        top: 20px;
-        right: -50px;
-        width: 200px;
-        padding: 8px;
-        text-align: center;
-        transform: rotate(45deg);
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.9rem;
-        letter-spacing: 1px;
-        opacity: 0.95;
-    }
-
-        .corner-ribbon.available {
-            background: linear-gradient(45deg, #00c853, #64dd17);
-            color: #000;
-        }
-          .corner-ribbon.reserved {
-            background: linear-gradient(45deg,rgb(200, 0, 77),rgb(145, 5, 75));
-            color: #000;
-        }
-
-
-    .card-content {
-        display: flex;
-        flex-direction: column;
-        padding: 2rem;
-        background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
-    }
-
-    .action-bar {
-        margin-top: auto; /* Gura dugmad na dno */
-    }
-    .title-gradient {
-        background: linear-gradient(45deg, #fff, #00ff88);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 2rem;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        margin-bottom: 0.5rem;
-    }
-
-    .location {
-        color: #e0e0e0;
-        opacity: 0.9;
-        margin-bottom: 2rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 1.1rem;
-    }
-
-    .data-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .data-item {
-        position: relative;
-        padding: 0.25rem;
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        transition: transform 0.3s ease;
-        color: white;
-        text-align: center;
-    }
-
-
-
-        .data-item:hover {
-            transform: translateY(-3px);
-        }
-
-    .price-bubble::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border: 2px solid rgba(0, 255, 136, 0.3);
-        border-radius: 12px;
-        animation: borderPulse 2s infinite;
-    }
-
-    .price-underline {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80%;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #00ff88, transparent);
-        animation: underlineFlow 3s infinite;
-    }
-
-    .type-frame {
-        text-align: center;
-        border: 2px solid rgba(0, 184, 216, 0.3) !important;
-    }
-
-    .area-frame {
-        text-align: center;
-        border: 2px solid rgba(238, 238, 238, 0.6) !important;
-    }
-
-    .area-dots {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 10%, transparent 20%);
-        background-size: 10px 10px;
-
-    }
-
-    .cyber-button {
-        position: relative;
-        width: 100%;
-        padding: 1.2rem;
-        border: 2px solid #00ff88 !important;
-        background: linear-gradient(45deg, #00ff88, #00b4d8);
-        clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-        .cyber-button:hover {
-            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-            filter: hue-rotate(45deg);
-        }
-
-          .cyber-button-reserved {
-            color: white;
-        position: relative;
-        width: 100%;
-        padding: 1.2rem;
-        border: 2px solidrgb(255, 0, 76) !important;
-        background: linear-gradient(45deg,rgb(190, 3, 44),rgb(51, 26, 33));
-        clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-        .cyber-button-reserved:hover {
-            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-            filter: hue-rotate(45deg);
-        }
-
-    .button-frame {
-        position: absolute;
-        inset: -3px;
-        border: 2px solid #00b4d8;
-        filter: blur(2px);
-        opacity: 0.7;
-        transition: all 0.3s ease;
-    }
-
-    .button-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.1) 50%, transparent 75%);
-        animation: cyberScan 3s infinite linear;
-    }
-
-    .status-chip {
-        border: 2px solid rgba(255, 75, 75, 0.3);
-        padding: 0.8rem 1.5rem;
-        position: relative;
-        width: 100%;
-        text-align: center;
-        border-radius: 8px;
-        color: white;
-    }
-
-    .status-border {
-        position: absolute;
-        inset: 0;
-        border: 1px solid rgba(255, 75, 75, 0.1);
-        margin: 2px;
-        border-radius: 6px;
-        color: white;
-    }
-
-    .pulse-dot {
-        width: 8px;
-        height: 8px;
-        background: #ff4b4b;
-        border-radius: 50%;
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        animation: borderPulse 1.5s infinite;
-    }
-
-    .button-content{
-        color:white;
-    }
-
+    /* Responsive */
     @@media (max-width: 768px) {
         .dashboard-container {
             padding: 1rem;
         }
 
-        .cinematic-grid {
+        .property-grid, .loading-grid {
             grid-template-columns: 1fr;
-            gap: 2rem;
         }
 
-        .property-card {
-            margin: 0 0.5rem;
-        }
-
-        .title-gradient {
-            font-size: 1.6rem;
+        .property-details {
+            grid-template-columns: repeat(3, 1fr);
         }
     }
-</style>
 
+    @@media (max-width: 480px) {
+        .property-details {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .detail-item:last-child {
+            grid-column: span 2;
+        }
+    }
+
+    /* Filter Container Styles */
+    .filters-container {
+        background-color: var(--surface-color);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .filters-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .filter-icon {
+        color: var(--primary-color);
+        font-size: 1.5rem;
+    }
+
+    .filter-title {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .clear-filters-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        background: none;
+        color: var(--primary-color);
+        font-weight: 500;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .clear-filters-btn:hover {
+        background-color: rgba(104, 129, 172, 0.08);
+    }
+
+    .filters-body {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Search Container Styles */
+    .search-container {
+        width: 100%;
+    }
+
+    .search-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+    }
+
+    .search-field:focus-within {
+        border-color: var(--primary-color);
+    }
+
+    .search-icon {
+        color: var(--primary-color);
+        font-size: 1.25rem;
+        padding: 0 1rem;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: none;
+        background: none;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        outline: none;
+    }
+
+    .clear-input {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        padding: 0.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .clear-input:hover {
+        color: var(--text-primary);
+    }
+
+    /* Filters Grid Styles */
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .select-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+    }
+
+    .select-container:focus-within {
+        border-color: var(--primary-color);
+    }
+
+    .select-icon {
+        color: var(--primary-color);
+        font-size: 1.25rem;
+        padding: 0 1rem;
+    }
+
+    .filter-select {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: none;
+        background: none;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        outline: none;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    /* Area Filter Styles */
+    .area-filter {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .area-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .area-inputs {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .input-container {
+        flex: 1;
+        position: relative;
+    }
+
+    .area-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--background-color);
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        outline: none;
+        transition: all 0.2s ease;
+    }
+
+    .area-input:focus {
+        border-color: var(--primary-color);
+    }
+
+    .area-divider {
+        height: 1px;
+        width: 16px;
+        background-color: var(--border-color);
+    }
+
+   
+}
+
+</style>
 @code {
     private ObservableCollection<PropertyDto> _properties;
     private string? _currentUserId;
+    private Dictionary<int, bool> _propertyReservationStatus = new Dictionary<int, bool>();
+    private List<ReservationDto> _allReservations = new(); // Store all reservations
+    private string? SearchPropertyName { get; set; }
+    private string? SelectedPropertyType { get; set; }
+    private string? SelectedStatus { get; set; }
+    private double? MinArea { get; set; }
+    private double? MaxArea { get; set; }
+
+    private IEnumerable<string> PropertyTypes { get; set; } = new List<string> { "House", "Apartment", "Office" };
+    private IEnumerable<string> StatusOptions { get; set; } = new List<string> { "Available", "Reserved" };
 
     protected override async Task OnInitializedAsync()
     {
@@ -470,24 +772,141 @@
             if (user.Identity?.IsAuthenticated == true)
             {
                 _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                                 user.FindFirst("sub")?.Value ??
-                                 user.FindFirst("nameid")?.Value ??
-                                 user.FindFirst("userId")?.Value ??
-                                 user.FindFirst("Id")?.Value;
+                                   user.FindFirst("sub")?.Value ??
+                                   user.FindFirst("nameid")?.Value ??
+                                   user.FindFirst("userId")?.Value ??
+                                   user.FindFirst("Id")?.Value;
             }
 
             Logger.LogInformation("Starting to load properties...");
             _properties = await PropertyService.GetAll();
             Logger.LogInformation($"Loaded {_properties?.Count ?? 0} properties");
+
+            Logger.LogInformation("Starting to load all reservations...");
+            var reservationsCollection = await ReservationService.GetAll();
+            _allReservations = reservationsCollection.ToList(); // Explicitly convert to List
+            Logger.LogInformation($"Loaded {_allReservations?.Count ?? 0} reservations");
+
+            // Check and update reservation status for all properties
+            await UpdateReservationStatuses();
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in OnInitializedAsync");
             _properties = new ObservableCollection<PropertyDto>();
+            _allReservations = new List<ReservationDto>();
         }
     }
 
-    // Metoda CreateReservation preuzeta iz koda 1 s dodatnim logiranjem
+    private async Task RefreshProperties()
+    {
+        try
+        {
+            _properties = await PropertyService.GetAll();
+            // Important: Update the reservation statuses whenever properties are refreshed
+            var reservationsCollection = await ReservationService.GetAll(); // Reload all reservations
+            _allReservations = reservationsCollection.ToList(); // Explicitly convert to List
+            await UpdateReservationStatuses();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error refreshing properties");
+        }
+    }
+
+   private async Task UpdateReservationStatuses()
+{
+    try
+    {
+        _propertyReservationStatus.Clear();
+        var today = DateTime.Today;
+
+        foreach (var property in _properties)
+        {
+            // Check if there are any active or upcoming CONFIRMED reservations for this property
+            bool hasActiveReservation = _allReservations.Any(r =>
+                r.PropertyId == property.PropertyId &&
+                r.Status?.Equals("Confirmed", StringComparison.OrdinalIgnoreCase) == true &&
+                r.EndDate >= today); // Only consider current and future reservations
+
+            _propertyReservationStatus[property.PropertyId] = hasActiveReservation;
+        }
+
+        Logger.LogInformation($"Updated reservation statuses for {_propertyReservationStatus.Count} properties");
+    }
+    catch (Exception ex)
+    {
+        Logger.LogError(ex, "Error updating reservation statuses");
+    }
+}
+
+    private bool IsPropertyAvailable(PropertyDto property)
+{
+    // First check if the property itself is marked as unavailable
+    if (property.Status?.Equals("Available", StringComparison.OrdinalIgnoreCase) != true)
+    {
+        return false;
+    }
+
+    // Then check our dictionary for the real-time reservation status
+    if (_propertyReservationStatus.TryGetValue(property.PropertyId, out bool isReserved))
+    {
+        return !isReserved;
+    }
+
+    // If we don't have reservation info, default to the property's status
+    return true;
+}
+
+    private string GetPropertyStatus(PropertyDto property)
+    {
+        var today = DateTime.Today;
+        
+        // Check for confirmed reservations
+        bool hasConfirmedReservation = _allReservations.Any(r =>
+            r.PropertyId == property.PropertyId &&
+            r.Status?.Equals("Confirmed", StringComparison.OrdinalIgnoreCase) == true &&
+            r.EndDate >= today);
+
+        // Check for pending reservations
+        bool hasPendingReservation = _allReservations.Any(r =>
+            r.PropertyId == property.PropertyId &&
+            r.Status?.Equals("Pending", StringComparison.OrdinalIgnoreCase) == true &&
+            r.EndDate >= today);
+
+        if (hasConfirmedReservation)
+        {
+            return "Reserved";
+        }
+        else if (hasPendingReservation)
+        {
+            return "Pending";
+        }
+
+        // If the property itself is marked as unavailable, use that status
+        if (property.Status?.Equals("Available", StringComparison.OrdinalIgnoreCase) != true)
+        {
+            return property.Status ?? "Unavailable";
+        }
+
+        // Property is available
+        return "Available";
+    }
+
+
+private void LogPropertyStatus(PropertyDto property)
+{
+    var dictionaryStatus = _propertyReservationStatus.TryGetValue(property.PropertyId, out bool isReserved) 
+        ? (isReserved ? "Reserved" : "Available") 
+        : "Unknown";
+    
+    Logger.LogInformation($"Property {property.PropertyId} - {property.Title}: " +
+        $"Property.Status={property.Status}, " +
+        $"Dictionary status={dictionaryStatus}, " +
+        $"Final status={GetPropertyStatus(property)}");
+}
+
     private async Task CreateReservation(PropertyDto property)
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -512,7 +931,7 @@
             return;
         }
 
-        if (property?.PropertyId == 0 || string.IsNullOrEmpty(property?.Title))
+        if (property?.PropertyId == 0)
         {
             Snackbar.Add("Invalid property information", Severity.Error);
             return;
@@ -545,16 +964,47 @@
         }
     }
 
-    private async Task RefreshProperties()
+    private bool FilterFunc(PropertyDto property)
     {
-        try
+        if (string.IsNullOrWhiteSpace(SearchPropertyName) &&
+            string.IsNullOrWhiteSpace(SelectedPropertyType) &&
+            string.IsNullOrWhiteSpace(SelectedStatus) &&
+            !MinArea.HasValue &&
+            !MaxArea.HasValue)
         {
-            _properties = await PropertyService.GetAll();
-            StateHasChanged();
+            return true;
         }
-        catch (Exception ex)
+
+        bool matchesSearch = string.IsNullOrWhiteSpace(SearchPropertyName) ||
+                           property.Title!.Contains(SearchPropertyName, StringComparison.OrdinalIgnoreCase) ||
+                           property.Address!.Contains(SearchPropertyName, StringComparison.OrdinalIgnoreCase);
+
+        bool matchesType = string.IsNullOrWhiteSpace(SelectedPropertyType) ||
+                         property.PropertyType == SelectedPropertyType;
+
+        bool matchesStatus = string.IsNullOrWhiteSpace(SelectedStatus) ||
+                           property.Status == SelectedStatus;
+
+        bool matchesArea = true;
+        if (MinArea.HasValue && property.Area < MinArea.Value)
         {
-            Logger.LogError(ex, "Error refreshing properties");
+            matchesArea = false;
         }
+        if (MaxArea.HasValue && property.Area > MaxArea.Value)
+        {
+            matchesArea = false;
+        }
+
+        return matchesSearch && matchesType && matchesStatus && matchesArea;
+    }
+
+    private void ClearFilters()
+    {
+        SearchPropertyName = null;
+        SelectedPropertyType = null;
+        SelectedStatus = null;
+        MinArea = null;
+        MaxArea = null;
+        StateHasChanged();
     }
 }
